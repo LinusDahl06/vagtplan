@@ -366,7 +366,7 @@ export default function SettingsScreen({ onBack, onLogout, onNavigateToSubscript
             onPress={() => {
               Alert.alert(
                 'Terms of Service',
-                'By using ShiftSync, you agree to our Terms of Service.\n\nKey points:\n• Must be 13+ years old to use\n• You own your content\n• Use only for lawful purposes\n• We can terminate accounts that violate terms\n\nFor the full terms, visit:\nhttps://linusdahl06.github.io/vagtplan/terms.html',
+                'By using ScheduHub, you agree to our Terms of Service.\n\nKey points:\n• Must be 13+ years old to use\n• You own your content\n• Use only for lawful purposes\n• We can terminate accounts that violate terms\n\nFor the full terms, visit:\nhttps://linusdahl06.github.io/vagtplan/terms.html',
                 [
                   { text: 'OK', style: 'default' },
                   { text: 'Open Link', onPress: () => Linking.openURL('https://linusdahl06.github.io/vagtplan/terms.html') }

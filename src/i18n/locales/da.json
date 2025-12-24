@@ -36,7 +36,7 @@
     "continueWithGoogle": "Fortsæt med Google"
   },
   "login": {
-    "title": "ShiftSync",
+    "title": "ScheduHub",
     "subtitle": "Administrer dit teams vagtplan med lethed",
     "formTitle": "Log ind",
     "emailPlaceholder": "E-mail",
@@ -363,7 +363,7 @@
     "title": "Vagtskabeloner",
     "count": "{{count}} skabelon",
     "count_plural": "{{count}} skabeloner",
-    "description": "Opret genbrugelige vagtskabeloner til hurtigt at tildele arbejdstimer",
+    "description": "Opret genbrugelige vagtskabeloner til hurtigt at tildele arbejdstaaimer",
     "addShiftPreset": "Tilføj vagtskabelon",
     "createPreset": "Opret skabelon",
     "creating": "Opretter...",
@@ -487,7 +487,7 @@
       "logout": "Log ud",
       "logoutDescription": "Log ud af din konto"
     },
-    "appInfo": "ShiftSync v1.0.0",
+    "appInfo": "ScheduHub v1.0.0",
     "errors": {
       "enterName": "Indtast venligst et navn",
       "updateFailed": "Kunne ikke opdatere profil",
