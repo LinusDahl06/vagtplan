@@ -36,7 +36,7 @@
     "continueWithGoogle": "Continue with Google"
   },
   "login": {
-    "title": "ShiftSync",
+    "title": "ScheduHub",
     "subtitle": "Manage your team's schedule with ease",
     "formTitle": "Sign In",
     "emailPlaceholder": "Email",
@@ -487,7 +487,7 @@
       "logout": "Logout",
       "logoutDescription": "Sign out of your account"
     },
-    "appInfo": "ShiftSync v1.0.0",
+    "appInfo": "ScheduHub v1.0.0",
     "errors": {
       "enterName": "Please enter a name",
       "updateFailed": "Failed to update profile",

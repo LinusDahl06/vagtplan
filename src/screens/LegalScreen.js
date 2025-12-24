@@ -24,7 +24,7 @@ export default function LegalScreen({ navigation, route }) {
 
       <Text style={styles(theme).sectionTitle}>Introduction</Text>
       <Text style={styles(theme).paragraph}>
-        Lincware operates the ShiftSync mobile application. This Privacy Policy informs you of our policies regarding the collection, use, and disclosure of personal data when you use our Service.
+        Lincware operates the ScheduHub mobile application. This Privacy Policy informs you of our policies regarding the collection, use, and disclosure of personal data when you use our Service.
       </Text>
 
       <Text style={styles(theme).sectionTitle}>Information We Collect</Text>
@@ -84,12 +84,12 @@ export default function LegalScreen({ navigation, route }) {
 
       <Text style={styles(theme).sectionTitle}>Agreement to Terms</Text>
       <Text style={styles(theme).paragraph}>
-        By using ShiftSync, you agree to be bound by these Terms of Service. If you disagree with any part of these terms, you may not use the Service.
+        By using ScheduHub, you agree to be bound by these Terms of Service. If you disagree with any part of these terms, you may not use the Service.
       </Text>
 
       <Text style={styles(theme).sectionTitle}>Description of Service</Text>
       <Text style={styles(theme).paragraph}>
-        ShiftSync is a shift scheduling and workforce management application that allows you to create workspaces, schedule shifts, and manage teams.
+        ScheduHub is a shift scheduling and workforce management application that allows you to create workspaces, schedule shifts, and manage teams.
       </Text>
 
       <Text style={styles(theme).sectionTitle}>User Accounts</Text>

@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "ShiftSync",
-    "slug": "shiftsync",
+    "name": "ScheduHub",
+    "slug": "scheduhub",
     "version": "1.0.0",
     "description": "Shift scheduling and workforce management made simple. Create workspaces, schedule shifts, and manage teams with ease.",
-    "scheme": "shiftsync",
+    "scheme": "scheduhub",
     "orientation": "portrait",
     "icon": "./assets/ShiftSync.png",
     "userInterfaceStyle": "light",
@@ -16,7 +16,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.lincware.shiftsync",
+      "bundleIdentifier": "com.lincware.scheduhub",
       "buildNumber": "1"
     },
     "android": {
@@ -25,7 +25,7 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.lincware.shiftsync",
+      "package": "com.lincware.scheduhub",
       "versionCode": 1,
       "permissions": [
         "READ_EXTERNAL_STORAGE",
