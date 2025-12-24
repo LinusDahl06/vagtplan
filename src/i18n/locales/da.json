@@ -1,0 +1,565 @@
+{
+  "common": {
+    "cancel": "Annuller",
+    "save": "Gem",
+    "delete": "Slet",
+    "edit": "Rediger",
+    "create": "Opret",
+    "confirm": "Bekræft",
+    "error": "Fejl",
+    "success": "Succes",
+    "loading": "Indlæser...",
+    "back": "Tilbage",
+    "close": "Luk",
+    "yes": "Ja",
+    "no": "Nej",
+    "owner": "Ejer",
+    "member": "Medlem",
+    "members": "medlemmer",
+    "hours": "timer",
+    "hour": "time"
+  },
+  "auth": {
+    "signIn": "Log ind",
+    "signUp": "Tilmeld dig",
+    "signOut": "Log ud",
+    "signingIn": "Logger ind...",
+    "email": "E-mail",
+    "password": "Adgangskode",
+    "fullName": "Fulde navn",
+    "username": "Brugernavn",
+    "dontHaveAccount": "Har du ikke en konto?",
+    "alreadyHaveAccount": "Har du allerede en konto?",
+    "signIn_action": "Log ind",
+    "createAccount": "Opret konto",
+    "creatingAccount": "Opretter konto...",
+    "continueWithGoogle": "Fortsæt med Google"
+  },
+  "login": {
+    "title": "ShiftSync",
+    "subtitle": "Administrer dit teams vagtplan med lethed",
+    "formTitle": "Log ind",
+    "emailPlaceholder": "E-mail",
+    "passwordPlaceholder": "Adgangskode",
+    "signInButton": "Log ind",
+    "signingIn": "Logger ind...",
+    "divider": "ELLER",
+    "errors": {
+      "fillAllFields": "Udfyld venligst alle felter",
+      "failedToSignIn": "Kunne ikke logge ind",
+      "invalidCredentials": "Ugyldig e-mail eller adgangskode",
+      "userNotFound": "Ingen konto fundet med denne e-mail",
+      "wrongPassword": "Forkert adgangskode",
+      "googleSignInFailed": "Kunne ikke starte Google login"
+    }
+  },
+  "signup": {
+    "steps": {
+      "username": {
+        "title": "Vælg et brugernavn",
+        "subtitle": "Vælg et unikt brugernavn til din konto",
+        "placeholder": "Brugernavn"
+      },
+      "name": {
+        "title": "Hvad hedder du?",
+        "subtitle": "Indtast dit fulde navn",
+        "placeholder": "Fulde navn"
+      },
+      "email": {
+        "title": "Hvad er din e-mail?",
+        "subtitle": "Indtast din e-mailadresse",
+        "placeholder": "E-mail"
+      },
+      "password": {
+        "title": "Opret en adgangskode",
+        "subtitle": "Skal være mindst 6 tegn",
+        "placeholder": "Adgangskode"
+      },
+      "profilePicture": {
+        "title": "Tilføj et profilbillede",
+        "subtitle": "Hjælp andre med at genkende dig (valgfrit)"
+      }
+    },
+    "tapToAddPhoto": "Tryk for at tilføje foto",
+    "continue": "Fortsæt",
+    "previous": "Forrige",
+    "skipForNow": "Spring over for nu",
+    "checking": "Kontrollerer...",
+    "creatingAccount": "Opretter konto...",
+    "createAccount": "Opret konto",
+    "alreadyHaveAccount": "Har du allerede en konto?",
+    "signIn": "Log ind",
+    "permissionNeeded": "Tilladelse påkrævet",
+    "permissionMessage": "Giv venligst tilladelse til at få adgang til dine billeder",
+    "imageUploadFailed": "Billedupload mislykkedes",
+    "imageUploadMessage": "Kunne ikke uploade profilbillede. Din konto oprettes uden et profilbillede.",
+    "accountCreated": "Konto oprettet!",
+    "signupError": "Tilmeldingsfejl",
+    "errors": {
+      "enterUsername": "Indtast venligst et brugernavn",
+      "usernameMinLength": "Brugernavn skal være mindst 3 tegn",
+      "usernameInvalidChars": "Brugernavn kan kun indeholde bogstaver, tal og understreger",
+      "usernameTaken": "Dette brugernavn er allerede taget",
+      "enterName": "Indtast venligst dit fulde navn",
+      "enterEmail": "Indtast venligst din e-mail",
+      "invalidEmail": "Indtast venligst en gyldig e-mailadresse",
+      "enterPassword": "Indtast venligst en adgangskode",
+      "passwordMinLength": "Adgangskode skal være mindst 6 tegn",
+      "emailInUse": "Denne e-mail er allerede registreret",
+      "weakPassword": "Adgangskoden er for svag",
+      "createFailed": "Kunne ikke oprette konto"
+    }
+  },
+  "workspaceOverview": {
+    "title": "Mine arbejdsområder",
+    "totalWorkspaces": "Arbejdsområder i alt",
+    "owned": "Ejet",
+    "member": "Medlem",
+    "loadingWorkspaces": "Indlæser arbejdsområder...",
+    "todayShifts": {
+      "noShifts": "Ingen vagter i dag"
+    },
+    "emptyState": {
+      "title": "Ingen arbejdsområder endnu",
+      "subtitle": "Opret dit første arbejdsområde for at komme i gang",
+      "createButton": "Opret arbejdsområde"
+    },
+    "createModal": {
+      "title": "Opret arbejdsområde",
+      "subtitle": "Opret et nyt arbejdsområde for at organisere dit team",
+      "placeholder": "Arbejdsområdets navn",
+      "createButton": "Opret"
+    },
+    "manageModal": {
+      "title": "Administrer arbejdsområde",
+      "subtitle": "Rediger arbejdsområdedetaljer eller slet",
+      "placeholder": "Arbejdsområdets navn",
+      "saveButton": "Gem ændringer",
+      "deleteButton": "Slet arbejdsområde"
+    },
+    "leaveModal": {
+      "title": "Forlad arbejdsområde",
+      "subtitle": "Du er ved at forlade \"{{name}}\"",
+      "warning": "Du vil miste adgang til dette arbejdsområde og alle dets data. Kun ejeren kan tilføje dig igen.",
+      "leaveButton": "Forlad arbejdsområde"
+    },
+    "leaveConfirm": {
+      "title": "Forlad arbejdsområde",
+      "message": "Er du sikker på, at du vil forlade \"{{name}}\"? Du skal geninviteres af ejeren for at vende tilbage.",
+      "leave": "Forlad"
+    },
+    "deleteConfirm": {
+      "title": "Slet arbejdsområde",
+      "message": "Er du sikker på, at du vil slette \"{{name}}\"? Denne handling kan ikke fortrydes."
+    },
+    "errors": {
+      "loadFailed": "Kunne ikke indlæse arbejdsområder",
+      "createFailed": "Kunne ikke oprette arbejdsområde",
+      "updateFailed": "Kunne ikke opdatere arbejdsområdets navn",
+      "deleteFailed": "Kunne ikke slette arbejdsområde",
+      "leaveFailed": "Kunne ikke forlade arbejdsområde",
+      "enterName": "Indtast venligst et arbejdsområdenavn"
+    },
+    "success": {
+      "created": "Arbejdsområde oprettet!",
+      "left": "Du har forladt arbejdsområdet"
+    }
+  },
+  "workspace": {
+    "tabs": {
+      "calendar": "Kalender",
+      "employees": "Medarbejdere",
+      "analytics": "Analyser",
+      "settings": "Indstillinger"
+    }
+  },
+  "calendar": {
+    "viewMode": {
+      "week": "Uge",
+      "month": "Måned"
+    },
+    "days": {
+      "monday": "Man",
+      "tuesday": "Tir",
+      "wednesday": "Ons",
+      "thursday": "Tor",
+      "friday": "Fre",
+      "saturday": "Lør",
+      "sunday": "Søn"
+    },
+    "today": "I DAG",
+    "todayButton": "I dag",
+    "week": "Uge",
+    "addShift": "+ Tilføj vagt",
+    "noShiftsScheduled": "Ingen vagter planlagt",
+    "customShift": "Tilpasset vagt",
+    "shiftsOnDay": "Vagter på denne dag",
+    "errors": {
+      "selectEmployee": "Vælg venligst en medarbejder",
+      "enterValidHours": "Indtast venligst gyldige timer",
+      "selectShiftOrHours": "Vælg venligst en vagtskabelon eller indtast tilpassede timer",
+      "addShift": "Kunne ikke tilføje vagt",
+      "updateShift": "Kunne ikke opdatere vagt",
+      "removeShift": "Kunne ikke fjerne vagt"
+    },
+    "duplicateShift": {
+      "title": "Duplikeret vagt",
+      "message": "{{name}} er allerede planlagt denne dag. Vil du erstatte deres eksisterende vagt?",
+      "replace": "Erstat"
+    },
+    "removeShift": {
+      "title": "Fjern vagt",
+      "message": "Fjern {{name}} fra denne vagt?",
+      "remove": "Fjern"
+    },
+    "addShiftModal": {
+      "title": "Tilføj vagt",
+      "selectEmployee": "Vælg medarbejder",
+      "allEmployeesScheduled": "Alle medarbejdere er allerede planlagt denne dag",
+      "selectShiftDuration": "Vælg vagtlængde",
+      "or": "ELLER",
+      "customHoursPlaceholder": "Tilpassede timer (f.eks. 3,5)",
+      "confirm": "Bekræft"
+    },
+    "editShiftModal": {
+      "title": "Rediger vagt",
+      "employee": "Medarbejder",
+      "selectShiftDuration": "Vælg vagtlængde",
+      "or": "ELLER",
+      "customHoursPlaceholder": "Tilpassede timer (f.eks. 3,5)",
+      "saveChanges": "Gem ændringer",
+      "removeShift": "Fjern vagt"
+    },
+    "presets": {
+      "saveAsPreset": "Gem som skabelon",
+      "loadPreset": "Indlæs skabelon",
+      "errors": {
+        "enterName": "Indtast venligst et navn til denne skabelon",
+        "noShifts": "Ingen vagter planlagt denne måned",
+        "noShiftsToApply": "Ingen vagter at anvende fra denne skabelon",
+        "save": "Kunne ikke gemme skabelon",
+        "apply": "Kunne ikke anvende skabelon",
+        "delete": "Kunne ikke slette skabelon"
+      },
+      "success": {
+        "saved": "Skabelon \"{{name}}\" gemt med succes",
+        "applied": "Skabelon anvendt på {{month}}",
+        "deleted": "Skabelon slettet"
+      },
+      "applyConfirm": {
+        "title": "Anvend skabelon",
+        "message": "Dette vil tilføje {{count}} vagter til {{month}}. Vil du fortsætte?",
+        "apply": "Anvend"
+      },
+      "deleteConfirm": {
+        "title": "Slet skabelon",
+        "message": "Slet skabelon \"{{name}}\"?"
+      },
+      "saveModal": {
+        "title": "Gem tidsplan som skabelon",
+        "subtitle": "Gem {{month}} tidsplanmønster",
+        "presetName": "Skabelonnavn",
+        "placeholder": "f.eks. Sommertidsplan, Weekendvagter",
+        "info": "Dette vil gemme alle vagter fra {{month}} som et genanvendeligt mønster baseret på ugedage.",
+        "saveButton": "Gem skabelon"
+      },
+      "loadModal": {
+        "title": "Indlæs tidsplanskabelon",
+        "subtitle": "Anvend på {{month}}",
+        "availablePresets": "Tilgængelige skabeloner",
+        "noPresets": "Ingen skabeloner gemt endnu",
+        "noPresetsSubtext": "Gem en måneds tidsplan for at oprette din første skabelon",
+        "close": "Luk"
+      }
+    }
+  },
+  "employees": {
+    "title": "Medarbejdere",
+    "addEmployee": "Tilføj medarbejder",
+    "searchPlaceholder": "Søg efter brugernavn",
+    "searchButton": "Søg",
+    "roleLabel": "Rolle",
+    "removeEmployee": "Fjern medarbejder",
+    "changeRole": "Skift rolle",
+    "noEmployees": "Ingen medarbejdere endnu",
+    "addFirstEmployee": "Tilføj dit første teammedlem",
+    "errors": {
+      "enterUsername": "Indtast venligst et brugernavn",
+      "userNotFound": "Ingen bruger fundet med det brugernavn",
+      "alreadyAdded": "Denne bruger er allerede medarbejder",
+      "addFailed": "Kunne ikke tilføje medarbejder",
+      "removeFailed": "Kunne ikke fjerne medarbejder",
+      "updateRoleFailed": "Kunne ikke opdatere medarbejderrolle"
+    },
+    "removeConfirm": {
+      "title": "Fjern medarbejder",
+      "message": "Er du sikker på, at du vil fjerne {{name}} fra dette arbejdsområde?"
+    },
+    "success": {
+      "added": "Medarbejder tilføjet!",
+      "removed": "Medarbejder fjernet",
+      "roleUpdated": "Medarbejderrolle opdateret"
+    }
+  },
+  "roles": {
+    "title": "Roller & tilladelser",
+    "count": "{{count}} rolle",
+    "count_plural": "{{count}} roller",
+    "infoCard": "Roller er hierarkiske - højere roller kan administrere lavere. Brug pile til at omarrangere.",
+    "addRole": "Tilføj rolle",
+    "createRole": "Opret rolle",
+    "creating": "Opretter...",
+    "editRole": "Rediger rolle",
+    "saveChanges": "Gem ændringer",
+    "saving": "Gemmer...",
+    "deleteRole": "Slet rolle",
+    "ownerBadge": "EJER",
+    "memberCount": "{{count}} medlem",
+    "memberCount_plural": "{{count}} medlemmer",
+    "morePermissions": "+{{count}} flere",
+    "emptyState": {
+      "title": "Ingen roller defineret",
+      "subtitle": "Opret roller for at organisere teamtilladelser"
+    },
+    "createModal": {
+      "title": "Opret ny rolle",
+      "subtitle": "Definer en rolle med specifikke tilladelser",
+      "placeholder": "Rollenavn (f.eks. leder)"
+    },
+    "editModal": {
+      "title": "Rediger rolle",
+      "subtitle": "Modificer rolledetaljer og tilladelser",
+      "placeholder": "Rollenavn",
+      "permissionsTitle": "Tilladelser",
+      "ownerPermissions": "(Ejer har alle tilladelser)"
+    },
+    "permissions": {
+      "manage_employees": "Administrer medarbejdere",
+      "manage_employees_desc": "Fjern og rediger roller for medarbejdere med lavere roller",
+      "manage_roles": "Administrer roller",
+      "manage_roles_desc": "Rediger roller, tilladelser og slet roller under deres niveau",
+      "manage_shifts": "Administrer vagter",
+      "manage_shifts_desc": "Rediger vagtskabeloner (navn, timer, slet)",
+      "manage_schedule": "Administrer vagtplan",
+      "manage_schedule_desc": "Tilføj og fjern vagter fra kalenderen",
+      "analytics": "Analyser",
+      "analytics_desc": "Se analyser og rapporter om medarbejdertimer og præstationer"
+    },
+    "errors": {
+      "enterName": "Indtast venligst et rollenavn",
+      "moveFailed": "Kunne ikke flytte rolle",
+      "updateFailed": "Kunne ikke opdatere rolle",
+      "cannotDelete": "{{count}} medarbejder(e) har denne rolle. Tildel dem venligst en anden først."
+    },
+    "deleteConfirm": {
+      "title": "Slet rolle",
+      "message": "Er du sikker på, at du vil slette \"{{name}}\"?"
+    },
+    "success": {
+      "updated": "Rolle opdateret!"
+    }
+  },
+  "shifts": {
+    "title": "Vagtskabeloner",
+    "count": "{{count}} skabelon",
+    "count_plural": "{{count}} skabeloner",
+    "description": "Opret genbrugelige vagtskabeloner til hurtigt at tildele arbejdstimer",
+    "addShiftPreset": "Tilføj vagtskabelon",
+    "createPreset": "Opret skabelon",
+    "creating": "Opretter...",
+    "editPreset": "Rediger vagtskabelon",
+    "saveChanges": "Gem ændringer",
+    "saving": "Gemmer...",
+    "deletePreset": "Slet skabelon",
+    "hoursLabel": "{{hours}} timer",
+    "emptyState": {
+      "title": "Ingen vagtskabeloner endnu",
+      "subtitle": "Opret vagtskabeloner for at strømline planlægningen",
+      "createButton": "Opret første skabelon"
+    },
+    "createModal": {
+      "title": "Opret vagtskabelon",
+      "subtitle": "Definer en genbrugelig vagtskabelon",
+      "namePlaceholder": "Vagtnavn (f.eks. morgenvagt)",
+      "hoursPlaceholder": "Varighed i timer (f.eks. 8)"
+    },
+    "editModal": {
+      "title": "Rediger vagtskabelon",
+      "subtitle": "Modificer vagtskabelondetaljer",
+      "namePlaceholder": "Vagtnavn",
+      "hoursPlaceholder": "Timer"
+    },
+    "errors": {
+      "enterName": "Indtast venligst et vagtnavn",
+      "enterHours": "Indtast venligst gyldige timer (større end 0)",
+      "createFailed": "Kunne ikke oprette vagtskabelon",
+      "updateFailed": "Kunne ikke opdatere vagtskabelon",
+      "deleteFailed": "Kunne ikke slette vagtskabelon",
+      "cannotDelete": "Denne vagtskabelon bruges i øjeblikket i vagtplanen. Fjern venligst disse vagter først."
+    },
+    "deleteConfirm": {
+      "title": "Slet vagtskabelon",
+      "message": "Er du sikker på, at du vil slette \"{{name}}\"?"
+    },
+    "success": {
+      "updated": "Vagtskabelon opdateret!"
+    }
+  },
+  "analytics": {
+    "title": "Analyser",
+    "hoursThisMonth": "Timer denne måned ({{month}})",
+    "monthlyTrend": "Månedlig timetrend",
+    "selectEmployee": "Vælg medarbejder",
+    "selectEmployeePrompt": "Vælg en medarbejder for at se månedlige tendenser",
+    "noDataThisMonth": "Ingen data tilgængelige for denne måned",
+    "viewMode": {
+      "chart": "Diagram",
+      "table": "Tabel",
+      "chartView": "Diagramvisning",
+      "tableView": "Tabelvisning"
+    }
+  },
+  "scheduleManagement": {
+    "title": "Vagtplanstyring",
+    "clearMonth": {
+      "title": "Ryd månedens vagtplan",
+      "description": "Fjern alle vagter for en bestemt måned. Denne handling kan ikke fortrydes.",
+      "button": "Ryd månedens vagtplan",
+      "modalTitle": "Ryd månedens vagtplan",
+      "modalDescription": "Dette vil permanent slette alle vagter for den valgte måned.",
+      "confirmLabel": "Skriv",
+      "confirmKeyword": "RYD MÅNED",
+      "confirmButton": "Ryd måned",
+      "success": "Alle vagter for {{month}} er blevet ryddet",
+      "errors": {
+        "confirmRequired": "Skriv venligst \"{{keyword}}\" for at bekræfte",
+        "failed": "Kunne ikke rydde månedens vagtplan"
+      }
+    },
+    "clearAll": {
+      "title": "Ryd alle vagtplaner",
+      "description": "Fjern ALLE vagter fra fortid, nutid og fremtid. Denne handling kan ikke fortrydes.",
+      "ownerWarning": "Kun ejer: Dette vil permanent slette alle vagtplandata",
+      "button": "Ryd alle vagtplaner",
+      "modalTitle": "Ryd alle vagtplaner",
+      "modalDescription": "Dette vil permanent slette ALLE vagter fra alle tidsperioder - fortid, nutid og fremtid.",
+      "warning": "ADVARSEL: Denne handling er irreversibel og vil slette alle vagtplandata!",
+      "confirmLabel": "Skriv",
+      "confirmKeyword": "SLET ALLE",
+      "confirmButton": "Slet alle",
+      "success": "Alle vagtplaner er blevet ryddet",
+      "errors": {
+        "confirmRequired": "Skriv venligst \"{{keyword}}\" for at bekræfte",
+        "failed": "Kunne ikke rydde vagtplaner"
+      }
+    }
+  },
+  "settings": {
+    "title": "Indstillinger",
+    "profile": {
+      "title": "Profil",
+      "name": "Navn",
+      "namePlaceholder": "Indtast dit navn",
+      "nameHint": "Dette navn vises for andre brugere",
+      "email": "E-mail",
+      "emailHint": "E-mail kan ikke ændres",
+      "profilePicture": "Profilbillede",
+      "tapCameraHint": "Tryk på kameraikon for at ændre",
+      "removePhoto": "Fjern billede",
+      "saveChanges": "Gem ændringer",
+      "saving": "Gemmer..."
+    },
+    "appearance": {
+      "title": "Udseende",
+      "theme": "Tema",
+      "darkMode": "Mørk tilstand",
+      "lightMode": "Lys tilstand"
+    },
+    "language": {
+      "title": "Sprog",
+      "selectLanguage": "Vælg sprog",
+      "english": "Engelsk",
+      "danish": "Dansk"
+    },
+    "subscription": "Abonnement",
+    "account": {
+      "title": "Konto",
+      "logout": "Log ud",
+      "logoutDescription": "Log ud af din konto"
+    },
+    "appInfo": "ShiftSync v1.0.0",
+    "errors": {
+      "enterName": "Indtast venligst et navn",
+      "updateFailed": "Kunne ikke opdatere profil",
+      "pickImageFailed": "Kunne ikke vælge billede",
+      "permissionRequired": "Tilladelse til at få adgang til kamerarullen er påkrævet!"
+    },
+    "removePhotoConfirm": {
+      "title": "Fjern profilbillede",
+      "message": "Er du sikker på, at du vil fjerne dit profilbillede?"
+    },
+    "logoutConfirm": {
+      "title": "Log ud",
+      "message": "Er du sikker på, at du vil logge ud?"
+    }
+  },
+  "defaultRoles": {
+    "owner": "Ejer",
+    "manager": "Leder",
+    "employee": "Medarbejder"
+  },
+  "defaultShiftPresets": {
+    "morningShift": "Morgenvagt",
+    "afternoonShift": "Eftermiddagsvagt",
+    "fullDay": "Hel dag"
+  },
+  "subscriptions": {
+    "title": "Abonnement",
+    "manageSubscription": "Administrer abonnement",
+    "description": "Vælg den plan, der passer til dit teams behov",
+    "current": "Nuværende plan",
+    "upgrade": "Opgrader",
+    "downgrade": "Nedgrader",
+    "comingSoon": "Kommer snart",
+    "upgradeComingSoon": "Abonnementsopgraderinger vil snart være tilgængelige. Kontakt support for at opgradere din plan.",
+    "footerNote": "Alle planer inkluderer ubegrænsede vagter, roller og vagtplanhistorik. Du kan ændre din plan når som helst.",
+    "tiers": {
+      "basic": {
+        "name": "Basis"
+      },
+      "extended": {
+        "name": "Udvidet"
+      },
+      "unlimited": {
+        "name": "Ubegrænset"
+      }
+    },
+    "features": {
+      "workspaces": "{{count}} arbejdsområde",
+      "workspaces_plural": "{{count}} arbejdsområder",
+      "unlimitedWorkspaces": "Ubegrænsede arbejdsområder",
+      "employeesPerWorkspace": "{{count}} medarbejder pr. arbejdsområde",
+      "employeesPerWorkspace_plural": "{{count}} medarbejdere pr. arbejdsområde",
+      "unlimitedEmployees": "Ubegrænsede medarbejdere pr. arbejdsområde"
+    },
+    "usage": {
+      "workspaces": "Bruger {{current}} af {{max}} arbejdsområder"
+    },
+    "limitReached": {
+      "title": "Abonnementsgrænse nået",
+      "workspaceMessage": "Du har nået din grænse for arbejdsområder ({{limit}}). Opgrader dit abonnement for at oprette flere arbejdsområder.",
+      "employeeMessage": "Dette arbejdsområde har nået medarbejdergrænsen ({{limit}}). Arbejdsområdets ejer skal opgradere for at tilføje flere medarbejdere."
+    },
+    "errors": {
+      "loadFailed": "Kunne ikke indlæse abonnementsoplysninger",
+      "updateFailed": "Kunne ikke opdatere abonnement"
+    },
+    "demo": {
+      "title": "Demo-tilstand",
+      "message": "DEMO: Skift abonnement til {{tier}}? Dette er kun til test.",
+      "confirm": "Skift (Demo)",
+      "success": "Abonnement opdateret (Demo-tilstand)",
+      "button": "Demo-ændring"
+    }
+  }
+}

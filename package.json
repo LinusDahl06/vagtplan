@@ -1,18 +1,40 @@
 {
-  "name": "vagtplan-new",
+  "name": "shiftsync",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
     "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "web": "expo start --web"
   },
   "dependencies": {
+    "@react-native-async-storage/async-storage": "^1.24.0",
+    "@react-native-google-signin/google-signin": "^16.0.0",
+    "@react-native-picker/picker": "^2.11.4",
+    "dotenv": "^17.2.3",
     "expo": "~54.0.25",
+    "expo-auth-session": "^7.0.9",
+    "expo-image-manipulator": "~14.0.7",
+    "expo-image-picker": "^17.0.8",
     "expo-status-bar": "~3.0.8",
+    "expo-web-browser": "^15.0.9",
+    "firebase": "^12.6.0",
+    "i18next": "^25.6.3",
     "react": "19.1.0",
-    "react-native": "0.81.5"
+    "react-dom": "19.1.0",
+    "react-i18next": "^16.3.5",
+    "react-native": "0.81.5",
+    "react-native-calendars": "^1.1313.0",
+    "react-native-chart-kit": "^6.12.0",
+    "react-native-draggable-flatlist": "^4.0.3",
+    "react-native-gesture-handler": "^2.29.1",
+    "react-native-reanimated": "^3.19.4",
+    "react-native-svg": "^15.15.0",
+    "react-native-web": "^0.21.0"
   },
-  "private": true
+  "private": true,
+  "devDependencies": {
+    "babel-preset-expo": "^54.0.7"
+  }
 }

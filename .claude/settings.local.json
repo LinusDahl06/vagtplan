@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm start)",
+      "Bash(node -c:*)",
+      "Bash(npm install:*)",
+      "Bash(npx expo install:*)",
+      "Bash(dir:*)",
+      "Bash(tree:*)",
+      "Bash(npm run dev:*)",
+      "Bash(taskkill /F /PID 40100)",
+      "Bash(taskkill //F //PID 40100)",
+      "Bash(ls:*)",
+      "Bash(timeout /t 3)",
+      "Bash(taskkill:*)",
+      "Bash(cat:*)",
+      "Bash(setx:*)",
+      "Bash(findstr:*)",
+      "Bash(export ANDROID_HOME=/j/Android-sdk)",
+      "Bash(export PATH=$PATH:/j/Android-sdk/platform-tools:/j/Android-sdk/emulator)",
+      "Bash(echo:*)",
+      "Bash(npm run web:*)",
+      "Bash(ANDROID_HOME=/j/Android-sdk PATH=$PATH:/j/Android-sdk/platform-tools:/j/Android-sdk/emulator npm start:*)",
+      "Bash(/j/Android-sdk/platform-tools/adb devices)",
+      "Bash(git add:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

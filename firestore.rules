@@ -1,0 +1,90 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidWorkspace(workspace) {
+      return workspace.name is string &&
+             workspace.name.size() > 0 &&
+             workspace.name.size() <= 100 &&
+             workspace.ownerId is string &&
+             workspace.employees is list &&
+             workspace.roles is list &&
+             workspace.shifts is list;
+    }
+
+    // Users collection - profiles
+    match /users/{userId} {
+      // Authenticated users can read any user profile
+      // This is needed for: workspace owner info, searching users to add as employees
+      allow read: if isAuthenticated();
+
+      // Users can create their own profile during signup
+      allow create: if isOwner(userId) &&
+                      request.resource.data.username is string &&
+                      request.resource.data.username.size() >= 3 &&
+                      request.resource.data.username.size() <= 30 &&
+                      request.resource.data.name is string &&
+                      request.resource.data.name.size() > 0 &&
+                      request.resource.data.name.size() <= 100 &&
+                      request.resource.data.email is string &&
+                      request.resource.data.email.matches('^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$');
+
+      // Users can update their own profile
+      // Note: subscriptionTier can only be updated (not checked here for simplicity)
+      // In production, subscription updates should be handled by backend/payment webhooks
+      allow update: if isOwner(userId) &&
+                      request.resource.data.username is string &&
+                      request.resource.data.username.size() >= 3 &&
+                      request.resource.data.username.size() <= 30 &&
+                      request.resource.data.name is string &&
+                      request.resource.data.name.size() > 0 &&
+                      request.resource.data.name.size() <= 100;
+
+      // Users cannot delete their own profile
+      allow delete: if false;
+    }
+
+    // Workspaces collection
+    match /workspaces/{workspaceId} {
+      // Allow authenticated users to read all workspaces
+      // App code will filter to show only relevant workspaces
+      // This is necessary because Firebase Rules can't check if userId exists in employees[].userId
+      allow read: if isAuthenticated();
+
+      // Only authenticated users can create workspaces
+      // NOTE: Subscription limits (max workspaces) are enforced client-side
+      // because Firebase Rules cannot count documents owned by a user across the collection
+      // In production, use Firebase Functions or backend API for server-side validation
+      allow create: if isAuthenticated() &&
+                      isValidWorkspace(request.resource.data) &&
+                      request.resource.data.ownerId == request.auth.uid;
+
+      // Workspace owner can update workspace
+      // Cannot change the ownerId field
+      // NOTE: Employee count limits are enforced client-side
+      // Firebase Rules cannot access owner's subscription tier from users collection
+      allow update: if isAuthenticated() &&
+                      isValidWorkspace(request.resource.data) &&
+                      resource.data.ownerId == request.auth.uid &&
+                      request.resource.data.ownerId == resource.data.ownerId;
+
+      // Only workspace owner can delete workspace
+      allow delete: if isAuthenticated() && resource.data.ownerId == request.auth.uid;
+    }
+
+    // Deny all other access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

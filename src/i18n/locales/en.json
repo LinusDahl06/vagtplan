@@ -1,0 +1,565 @@
+{
+  "common": {
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "confirm": "Confirm",
+    "error": "Error",
+    "success": "Success",
+    "loading": "Loading...",
+    "back": "Back",
+    "close": "Close",
+    "yes": "Yes",
+    "no": "No",
+    "owner": "Owner",
+    "member": "Member",
+    "members": "members",
+    "hours": "hours",
+    "hour": "hour"
+  },
+  "auth": {
+    "signIn": "Sign In",
+    "signUp": "Sign up",
+    "signOut": "Logout",
+    "signingIn": "Signing in...",
+    "email": "Email",
+    "password": "Password",
+    "fullName": "Full Name",
+    "username": "Username",
+    "dontHaveAccount": "Don't have an account?",
+    "alreadyHaveAccount": "Already have an account?",
+    "signIn_action": "Sign in",
+    "createAccount": "Create Account",
+    "creatingAccount": "Creating account...",
+    "continueWithGoogle": "Continue with Google"
+  },
+  "login": {
+    "title": "ShiftSync",
+    "subtitle": "Manage your team's schedule with ease",
+    "formTitle": "Sign In",
+    "emailPlaceholder": "Email",
+    "passwordPlaceholder": "Password",
+    "signInButton": "Sign In",
+    "signingIn": "Signing in...",
+    "divider": "OR",
+    "errors": {
+      "fillAllFields": "Please fill in all fields",
+      "failedToSignIn": "Failed to sign in",
+      "invalidCredentials": "Invalid email or password",
+      "userNotFound": "No account found with this email",
+      "wrongPassword": "Incorrect password",
+      "googleSignInFailed": "Failed to initiate Google Sign-In"
+    }
+  },
+  "signup": {
+    "steps": {
+      "username": {
+        "title": "Choose a username",
+        "subtitle": "Pick a unique username for your account",
+        "placeholder": "Username"
+      },
+      "name": {
+        "title": "What's your name?",
+        "subtitle": "Enter your full name",
+        "placeholder": "Full Name"
+      },
+      "email": {
+        "title": "What's your email?",
+        "subtitle": "Enter your email address",
+        "placeholder": "Email"
+      },
+      "password": {
+        "title": "Create a password",
+        "subtitle": "Must be at least 6 characters",
+        "placeholder": "Password"
+      },
+      "profilePicture": {
+        "title": "Add a profile picture",
+        "subtitle": "Help others recognize you (optional)"
+      }
+    },
+    "tapToAddPhoto": "Tap to add photo",
+    "continue": "Continue",
+    "previous": "Previous",
+    "skipForNow": "Skip for now",
+    "checking": "Checking...",
+    "creatingAccount": "Creating account...",
+    "createAccount": "Create Account",
+    "alreadyHaveAccount": "Already have an account?",
+    "signIn": "Sign in",
+    "permissionNeeded": "Permission needed",
+    "permissionMessage": "Please grant permission to access your photos",
+    "imageUploadFailed": "Image Upload Failed",
+    "imageUploadMessage": "Could not upload profile picture. Your account will be created without a profile picture.",
+    "accountCreated": "Account created successfully!",
+    "signupError": "Signup Error",
+    "errors": {
+      "enterUsername": "Please enter a username",
+      "usernameMinLength": "Username must be at least 3 characters",
+      "usernameInvalidChars": "Username can only contain letters, numbers, and underscores",
+      "usernameTaken": "This username is already taken",
+      "enterName": "Please enter your full name",
+      "enterEmail": "Please enter your email",
+      "invalidEmail": "Please enter a valid email address",
+      "enterPassword": "Please enter a password",
+      "passwordMinLength": "Password must be at least 6 characters",
+      "emailInUse": "This email is already registered",
+      "weakPassword": "Password is too weak",
+      "createFailed": "Failed to create account"
+    }
+  },
+  "workspaceOverview": {
+    "title": "My Workspaces",
+    "totalWorkspaces": "Total Workspaces",
+    "owned": "Owned",
+    "member": "Member",
+    "loadingWorkspaces": "Loading workspaces...",
+    "todayShifts": {
+      "noShifts": "No shifts today"
+    },
+    "emptyState": {
+      "title": "No workspaces yet",
+      "subtitle": "Create your first workspace to get started",
+      "createButton": "Create Workspace"
+    },
+    "createModal": {
+      "title": "Create Workspace",
+      "subtitle": "Create a new workspace to organize your team",
+      "placeholder": "Workspace Name",
+      "createButton": "Create"
+    },
+    "manageModal": {
+      "title": "Manage Workspace",
+      "subtitle": "Edit workspace details or delete",
+      "placeholder": "Workspace Name",
+      "saveButton": "Save Changes",
+      "deleteButton": "Delete Workspace"
+    },
+    "leaveModal": {
+      "title": "Leave Workspace",
+      "subtitle": "You are about to leave \"{{name}}\"",
+      "warning": "You will lose access to this workspace and all its data. Only the owner can add you back.",
+      "leaveButton": "Leave Workspace"
+    },
+    "leaveConfirm": {
+      "title": "Leave Workspace",
+      "message": "Are you sure you want to leave \"{{name}}\"? You will need to be re-invited by the owner to rejoin.",
+      "leave": "Leave"
+    },
+    "deleteConfirm": {
+      "title": "Delete Workspace",
+      "message": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone."
+    },
+    "errors": {
+      "loadFailed": "Failed to load workspaces",
+      "createFailed": "Failed to create workspace",
+      "updateFailed": "Failed to update workspace name",
+      "deleteFailed": "Failed to delete workspace",
+      "leaveFailed": "Failed to leave workspace",
+      "enterName": "Please enter a workspace name"
+    },
+    "success": {
+      "created": "Workspace created!",
+      "left": "You have left the workspace"
+    }
+  },
+  "workspace": {
+    "tabs": {
+      "calendar": "Calendar",
+      "employees": "Employees",
+      "analytics": "Analytics",
+      "settings": "Settings"
+    }
+  },
+  "calendar": {
+    "viewMode": {
+      "week": "Week",
+      "month": "Month"
+    },
+    "days": {
+      "monday": "Mon",
+      "tuesday": "Tue",
+      "wednesday": "Wed",
+      "thursday": "Thu",
+      "friday": "Fri",
+      "saturday": "Sat",
+      "sunday": "Sun"
+    },
+    "today": "TODAY",
+    "todayButton": "Today",
+    "week": "Week",
+    "addShift": "+ Add Shift",
+    "noShiftsScheduled": "No shifts scheduled",
+    "customShift": "Custom",
+    "shiftsOnDay": "Shifts on this day",
+    "errors": {
+      "selectEmployee": "Please select an employee",
+      "enterValidHours": "Please enter valid hours",
+      "selectShiftOrHours": "Please select a shift preset or enter custom hours",
+      "addShift": "Failed to add shift",
+      "updateShift": "Failed to update shift",
+      "removeShift": "Failed to remove shift"
+    },
+    "duplicateShift": {
+      "title": "Duplicate Shift",
+      "message": "{{name}} is already scheduled on this day. Would you like to replace their existing shift?",
+      "replace": "Replace"
+    },
+    "removeShift": {
+      "title": "Remove Shift",
+      "message": "Remove {{name}} from this shift?",
+      "remove": "Remove"
+    },
+    "addShiftModal": {
+      "title": "Add Shift",
+      "selectEmployee": "Select Employee",
+      "allEmployeesScheduled": "All employees are already scheduled for this day",
+      "selectShiftDuration": "Select Shift Duration",
+      "or": "OR",
+      "customHoursPlaceholder": "Custom hours (e.g., 3.5)",
+      "confirm": "Confirm"
+    },
+    "editShiftModal": {
+      "title": "Edit Shift",
+      "employee": "Employee",
+      "selectShiftDuration": "Select Shift Duration",
+      "or": "OR",
+      "customHoursPlaceholder": "Custom hours (e.g., 3.5)",
+      "saveChanges": "Save Changes",
+      "removeShift": "Remove Shift"
+    },
+    "presets": {
+      "saveAsPreset": "Save as Preset",
+      "loadPreset": "Load Preset",
+      "errors": {
+        "enterName": "Please enter a name for this preset",
+        "noShifts": "No shifts scheduled for this month",
+        "noShiftsToApply": "No shifts to apply from this preset",
+        "save": "Failed to save preset",
+        "apply": "Failed to apply preset",
+        "delete": "Failed to delete preset"
+      },
+      "success": {
+        "saved": "Preset \"{{name}}\" saved successfully",
+        "applied": "Preset applied to {{month}}",
+        "deleted": "Preset deleted"
+      },
+      "applyConfirm": {
+        "title": "Apply Preset",
+        "message": "This will add {{count}} shifts to {{month}}. Do you want to continue?",
+        "apply": "Apply"
+      },
+      "deleteConfirm": {
+        "title": "Delete Preset",
+        "message": "Delete preset \"{{name}}\"?"
+      },
+      "saveModal": {
+        "title": "Save Schedule as Preset",
+        "subtitle": "Save {{month}} schedule pattern",
+        "presetName": "Preset Name",
+        "placeholder": "e.g., Summer Schedule, Weekend Shifts",
+        "info": "This will save all shifts from {{month}} as a reusable pattern based on days of the week.",
+        "saveButton": "Save Preset"
+      },
+      "loadModal": {
+        "title": "Load Schedule Preset",
+        "subtitle": "Apply to {{month}}",
+        "availablePresets": "Available Presets",
+        "noPresets": "No presets saved yet",
+        "noPresetsSubtext": "Save a month's schedule to create your first preset",
+        "close": "Close"
+      }
+    }
+  },
+  "employees": {
+    "title": "Employees",
+    "addEmployee": "Add Employee",
+    "searchPlaceholder": "Search by username",
+    "searchButton": "Search",
+    "roleLabel": "Role",
+    "removeEmployee": "Remove Employee",
+    "changeRole": "Change Role",
+    "noEmployees": "No employees yet",
+    "addFirstEmployee": "Add your first team member",
+    "errors": {
+      "enterUsername": "Please enter a username",
+      "userNotFound": "No user found with that username",
+      "alreadyAdded": "This user is already an employee",
+      "addFailed": "Failed to add employee",
+      "removeFailed": "Failed to remove employee",
+      "updateRoleFailed": "Failed to update employee role"
+    },
+    "removeConfirm": {
+      "title": "Remove Employee",
+      "message": "Are you sure you want to remove {{name}} from this workspace?"
+    },
+    "success": {
+      "added": "Employee added successfully!",
+      "removed": "Employee removed",
+      "roleUpdated": "Employee role updated"
+    }
+  },
+  "roles": {
+    "title": "Roles & Permissions",
+    "count": "{{count}} role",
+    "count_plural": "{{count}} roles",
+    "infoCard": "Roles are hierarchical - higher roles can manage lower ones. Use arrows to reorder.",
+    "addRole": "Add Role",
+    "createRole": "Create Role",
+    "creating": "Creating...",
+    "editRole": "Edit Role",
+    "saveChanges": "Save Changes",
+    "saving": "Saving...",
+    "deleteRole": "Delete Role",
+    "ownerBadge": "OWNER",
+    "memberCount": "{{count}} member",
+    "memberCount_plural": "{{count}} members",
+    "morePermissions": "+{{count}} more",
+    "emptyState": {
+      "title": "No roles defined",
+      "subtitle": "Create roles to organize team permissions"
+    },
+    "createModal": {
+      "title": "Create New Role",
+      "subtitle": "Define a role with specific permissions",
+      "placeholder": "Role name (e.g., Manager)"
+    },
+    "editModal": {
+      "title": "Edit Role",
+      "subtitle": "Modify role details and permissions",
+      "placeholder": "Role name",
+      "permissionsTitle": "Permissions",
+      "ownerPermissions": "(Owner has all permissions)"
+    },
+    "permissions": {
+      "manage_employees": "Manage Employees",
+      "manage_employees_desc": "Remove and edit roles of employees with lower roles",
+      "manage_roles": "Manage Roles",
+      "manage_roles_desc": "Edit roles, permissions, and delete roles below their level",
+      "manage_shifts": "Manage Shifts",
+      "manage_shifts_desc": "Edit shift presets (name, hours, delete)",
+      "manage_schedule": "Manage Schedule",
+      "manage_schedule_desc": "Add and remove shifts from the calendar",
+      "analytics": "Analytics",
+      "analytics_desc": "View analytics and reports about employee hours and performance"
+    },
+    "errors": {
+      "enterName": "Please enter a role name",
+      "moveFailed": "Failed to move role",
+      "updateFailed": "Failed to update role",
+      "cannotDelete": "{{count}} employee(s) have this role. Please reassign them first."
+    },
+    "deleteConfirm": {
+      "title": "Delete Role",
+      "message": "Are you sure you want to delete \"{{name}}\"?"
+    },
+    "success": {
+      "updated": "Role updated!"
+    }
+  },
+  "shifts": {
+    "title": "Shift Presets",
+    "count": "{{count}} preset",
+    "count_plural": "{{count}} presets",
+    "description": "Create reusable shift templates to quickly assign work hours",
+    "addShiftPreset": "Add Shift Preset",
+    "createPreset": "Create Preset",
+    "creating": "Creating...",
+    "editPreset": "Edit Shift Preset",
+    "saveChanges": "Save Changes",
+    "saving": "Saving...",
+    "deletePreset": "Delete Preset",
+    "hoursLabel": "{{hours}} hours",
+    "emptyState": {
+      "title": "No shift presets yet",
+      "subtitle": "Create shift templates to streamline scheduling",
+      "createButton": "Create First Preset"
+    },
+    "createModal": {
+      "title": "Create Shift Preset",
+      "subtitle": "Define a reusable shift template",
+      "namePlaceholder": "Shift name (e.g., Morning Shift)",
+      "hoursPlaceholder": "Duration in hours (e.g., 8)"
+    },
+    "editModal": {
+      "title": "Edit Shift Preset",
+      "subtitle": "Modify shift template details",
+      "namePlaceholder": "Shift name",
+      "hoursPlaceholder": "Hours"
+    },
+    "errors": {
+      "enterName": "Please enter a shift name",
+      "enterHours": "Please enter valid hours (greater than 0)",
+      "createFailed": "Failed to create shift preset",
+      "updateFailed": "Failed to update shift preset",
+      "deleteFailed": "Failed to delete shift preset",
+      "cannotDelete": "This shift preset is currently being used in the schedule. Please remove those shifts first."
+    },
+    "deleteConfirm": {
+      "title": "Delete Shift Preset",
+      "message": "Are you sure you want to delete \"{{name}}\"?"
+    },
+    "success": {
+      "updated": "Shift preset updated!"
+    }
+  },
+  "analytics": {
+    "title": "Analytics",
+    "hoursThisMonth": "Hours This Month ({{month}})",
+    "monthlyTrend": "Monthly Hours Trend",
+    "selectEmployee": "Select Employee",
+    "selectEmployeePrompt": "Select an employee to view monthly trends",
+    "noDataThisMonth": "No data available for this month",
+    "viewMode": {
+      "chart": "Chart",
+      "table": "Table",
+      "chartView": "Chart View",
+      "tableView": "Table View"
+    }
+  },
+  "scheduleManagement": {
+    "title": "Schedule Management",
+    "clearMonth": {
+      "title": "Clear Month Schedule",
+      "description": "Remove all shifts for a specific month. This action cannot be undone.",
+      "button": "Clear Month Schedule",
+      "modalTitle": "Clear Month Schedule",
+      "modalDescription": "This will permanently delete all shifts for the selected month.",
+      "confirmLabel": "Type",
+      "confirmKeyword": "CLEAR MONTH",
+      "confirmButton": "Clear Month",
+      "success": "All shifts for {{month}} have been cleared",
+      "errors": {
+        "confirmRequired": "Please type \"{{keyword}}\" to confirm",
+        "failed": "Failed to clear month schedule"
+      }
+    },
+    "clearAll": {
+      "title": "Clear All Schedules",
+      "description": "Remove ALL shifts from past, present, and future. This action cannot be undone.",
+      "ownerWarning": "Owner Only: This will permanently delete all schedule data",
+      "button": "Clear All Schedules",
+      "modalTitle": "Clear All Schedules",
+      "modalDescription": "This will permanently delete ALL shifts from all time periods - past, present, and future.",
+      "warning": "WARNING: This action is irreversible and will delete all schedule data!",
+      "confirmLabel": "Type",
+      "confirmKeyword": "DELETE ALL",
+      "confirmButton": "Delete All",
+      "success": "All schedules have been cleared",
+      "errors": {
+        "confirmRequired": "Please type \"{{keyword}}\" to confirm",
+        "failed": "Failed to clear schedules"
+      }
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "profile": {
+      "title": "Profile",
+      "name": "Name",
+      "namePlaceholder": "Enter your name",
+      "nameHint": "This name will be displayed to other users",
+      "email": "Email",
+      "emailHint": "Email cannot be changed",
+      "profilePicture": "Profile Picture",
+      "tapCameraHint": "Tap camera icon to change",
+      "removePhoto": "Remove photo",
+      "saveChanges": "Save Changes",
+      "saving": "Saving..."
+    },
+    "appearance": {
+      "title": "Appearance",
+      "theme": "Theme",
+      "darkMode": "Dark mode",
+      "lightMode": "Light mode"
+    },
+    "language": {
+      "title": "Language",
+      "selectLanguage": "Select Language",
+      "english": "English",
+      "danish": "Danish"
+    },
+    "subscription": "Subscription",
+    "account": {
+      "title": "Account",
+      "logout": "Logout",
+      "logoutDescription": "Sign out of your account"
+    },
+    "appInfo": "ShiftSync v1.0.0",
+    "errors": {
+      "enterName": "Please enter a name",
+      "updateFailed": "Failed to update profile",
+      "pickImageFailed": "Failed to pick image",
+      "permissionRequired": "Permission to access camera roll is required!"
+    },
+    "removePhotoConfirm": {
+      "title": "Remove Profile Picture",
+      "message": "Are you sure you want to remove your profile picture?"
+    },
+    "logoutConfirm": {
+      "title": "Logout",
+      "message": "Are you sure you want to logout?"
+    }
+  },
+  "defaultRoles": {
+    "owner": "Owner",
+    "manager": "Manager",
+    "employee": "Employee"
+  },
+  "defaultShiftPresets": {
+    "morningShift": "Morning Shift",
+    "afternoonShift": "Afternoon Shift",
+    "fullDay": "Full Day"
+  },
+  "subscriptions": {
+    "title": "Subscription",
+    "manageSubscription": "Manage Subscription",
+    "description": "Choose the plan that fits your team's needs",
+    "current": "Current Plan",
+    "upgrade": "Upgrade",
+    "downgrade": "Downgrade",
+    "comingSoon": "Coming Soon",
+    "upgradeComingSoon": "Subscription upgrades will be available soon. For now, contact support to upgrade your plan.",
+    "footerNote": "All plans include unlimited shifts, roles, and schedule history. You can change your plan at any time.",
+    "tiers": {
+      "basic": {
+        "name": "Basic"
+      },
+      "extended": {
+        "name": "Extended"
+      },
+      "unlimited": {
+        "name": "Unlimited"
+      }
+    },
+    "features": {
+      "workspaces": "{{count}} workspace",
+      "workspaces_plural": "{{count}} workspaces",
+      "unlimitedWorkspaces": "Unlimited workspaces",
+      "employeesPerWorkspace": "{{count}} employee per workspace",
+      "employeesPerWorkspace_plural": "{{count}} employees per workspace",
+      "unlimitedEmployees": "Unlimited employees per workspace"
+    },
+    "usage": {
+      "workspaces": "Using {{current}} of {{max}} workspaces"
+    },
+    "limitReached": {
+      "title": "Subscription Limit Reached",
+      "workspaceMessage": "You've reached your workspace limit ({{limit}}). Upgrade your subscription to create more workspaces.",
+      "employeeMessage": "This workspace has reached the employee limit ({{limit}}). The workspace owner needs to upgrade to add more employees."
+    },
+    "errors": {
+      "loadFailed": "Failed to load subscription information",
+      "updateFailed": "Failed to update subscription"
+    },
+    "demo": {
+      "title": "Demo Mode",
+      "message": "DEMO: Change subscription to {{tier}}? This is for testing only.",
+      "confirm": "Change (Demo)",
+      "success": "Subscription updated (Demo mode)",
+      "button": "Demo Change"
+    }
+  }
+}

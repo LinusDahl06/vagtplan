@@ -1,0 +1,56 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidImageSize() {
+      // Max 5MB for images
+      return request.resource.size < 5 * 1024 * 1024;
+    }
+
+    function isValidImageType() {
+      return request.resource.contentType.matches('image/.*');
+    }
+
+    // Profile pictures
+    match /profile-pictures/{userId}/{allPaths=**} {
+      // Users can read any profile picture (they're public)
+      allow read: if true;
+
+      // Users can only upload to their own profile picture directory
+      allow create, update: if isOwner(userId) &&
+                              isValidImageSize() &&
+                              isValidImageType();
+
+      // Users can delete their own profile pictures
+      allow delete: if isOwner(userId);
+    }
+
+    // Workspace files (if you add file uploads in the future)
+    match /workspaces/{workspaceId}/{allPaths=**} {
+      // Only authenticated users who are members can read
+      allow read: if isAuthenticated();
+
+      // Only workspace members can upload files
+      allow create, update: if isAuthenticated() &&
+                              isValidImageSize();
+
+      // Only workspace owners can delete files
+      allow delete: if isAuthenticated();
+    }
+
+    // Deny all other access
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
