@@ -22,7 +22,11 @@
       "Bash(npm run web:*)",
       "Bash(ANDROID_HOME=/j/Android-sdk PATH=$PATH:/j/Android-sdk/platform-tools:/j/Android-sdk/emulator npm start:*)",
       "Bash(/j/Android-sdk/platform-tools/adb devices)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git remote add:*)",
+      "Bash(git branch:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []

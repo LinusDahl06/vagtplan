@@ -341,10 +341,10 @@ export default function SettingsScreen({ onBack, onLogout, onNavigateToSubscript
             onPress={() => {
               Alert.alert(
                 'Privacy Policy',
-                'Our Privacy Policy explains how we collect, use, and protect your personal data.\n\nKey points:\n• We don\'t sell your data\n• Data is encrypted and stored securely\n• You can delete your account anytime\n• GDPR & CCPA compliant\n\nFor the full privacy policy, visit:\nhttps://yourusername.github.io/shiftsync/privacy.html',
+                'Our Privacy Policy explains how we collect, use, and protect your personal data.\n\nKey points:\n• We don\'t sell your data\n• Data is encrypted and stored securely\n• You can delete your account anytime\n• GDPR & CCPA compliant\n\nFor the full privacy policy, visit:\nhttps://linusdahl06.github.io/vagtplan/privacy.html',
                 [
                   { text: 'OK', style: 'default' },
-                  { text: 'Open Link', onPress: () => Linking.openURL('https://yourusername.github.io/shiftsync/privacy.html') }
+                  { text: 'Open Link', onPress: () => Linking.openURL('https://linusdahl06.github.io/vagtplan/privacy.html') }
                 ]
               );
             }}
@@ -366,10 +366,10 @@ export default function SettingsScreen({ onBack, onLogout, onNavigateToSubscript
             onPress={() => {
               Alert.alert(
                 'Terms of Service',
-                'By using ShiftSync, you agree to our Terms of Service.\n\nKey points:\n• Must be 13+ years old to use\n• You own your content\n• Use only for lawful purposes\n• We can terminate accounts that violate terms\n\nFor the full terms, visit:\nhttps://yourusername.github.io/shiftsync/terms.html',
+                'By using ShiftSync, you agree to our Terms of Service.\n\nKey points:\n• Must be 13+ years old to use\n• You own your content\n• Use only for lawful purposes\n• We can terminate accounts that violate terms\n\nFor the full terms, visit:\nhttps://linusdahl06.github.io/vagtplan/terms.html',
                 [
                   { text: 'OK', style: 'default' },
-                  { text: 'Open Link', onPress: () => Linking.openURL('https://yourusername.github.io/shiftsync/terms.html') }
+                  { text: 'Open Link', onPress: () => Linking.openURL('https://linusdahl06.github.io/vagtplan/terms.html') }
                 ]
               );
             }}
