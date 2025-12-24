@@ -363,7 +363,7 @@
     "title": "Vagtskabeloner",
     "count": "{{count}} skabelon",
     "count_plural": "{{count}} skabeloner",
-    "description": "Opret genbrugelige vagtskabeloner til hurtigt at tildele arbejdstimer",
+    "description": "Opret genbrugelige vagtskabeloner til hurtigt at tildele arbejdstaaimer",
     "addShiftPreset": "Tilføj vagtskabelon",
     "createPreset": "Opret skabelon",
     "creating": "Opretter...",
