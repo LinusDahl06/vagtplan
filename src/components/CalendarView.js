@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TouchableWithoutFeedback, Modal, StyleSheet, TextInput, Alert, KeyboardAvoidingView, Platform, Image, Keyboard } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
+import { View, Text, ScrollView, TouchableOpacity, TouchableWithoutFeedback, Modal, StyleSheet, TextInput, Alert, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { doc, updateDoc, getDoc, onSnapshot } from 'firebase/firestore';
 import { db, auth } from '../config/firebase';
@@ -9,6 +8,8 @@ import { useTranslation } from 'react-i18next';
 import { getEmployeeColor, getColorWithAlpha, getVibrantColor } from '../utils/employeeColors';
 import { calculateHours, formatTimeRange, generateTimeOptions } from '../utils/timeUtils';
 import { createShiftSwapRequest } from '../utils/shiftSwapService';
+import OptimizedImage from './OptimizedImage';
+import ShiftNotesModal from './ShiftNotesModal';
 
 export default function CalendarView({ workspace, onWorkspaceUpdate }) {
   const { theme } = useTheme();
@@ -33,9 +34,17 @@ export default function CalendarView({ workspace, onWorkspaceUpdate }) {
   const [selectedDayShifts, setSelectedDayShifts] = useState([]);
   const [isEmployeeDropdownOpen, setIsEmployeeDropdownOpen] = useState(false);
   const [isShiftDropdownOpen, setIsShiftDropdownOpen] = useState(false);
+  const [isEditShiftDropdownOpen, setIsEditShiftDropdownOpen] = useState(false);
+  const [editSelectedShiftPreset, setEditSelectedShiftPreset] = useState(null);
+  const [isStartTimeDropdownOpen, setIsStartTimeDropdownOpen] = useState(false);
+  const [isEndTimeDropdownOpen, setIsEndTimeDropdownOpen] = useState(false);
+  const [isAddStartTimeDropdownOpen, setIsAddStartTimeDropdownOpen] = useState(false);
+  const [isAddEndTimeDropdownOpen, setIsAddEndTimeDropdownOpen] = useState(false);
   const [showShiftSwapModal, setShowShiftSwapModal] = useState(false);
   const [selectedShiftForSwap, setSelectedShiftForSwap] = useState(null);
   const [swapMessage, setSwapMessage] = useState('');
+  const [showNotesModal, setShowNotesModal] = useState(false);
+  const [selectedShiftForNotes, setSelectedShiftForNotes] = useState(null);
 
   const scrollViewRef = React.useRef(null);
   const todayCardRef = React.useRef(null);
@@ -415,8 +424,14 @@ export default function CalendarView({ workspace, onWorkspaceUpdate }) {
     const employee = allEmployees.find(e => e.userId === scheduleItem.employeeId);
     setSelectedEmployee(employee);
 
-    // Always use custom times for editing (shift presets are only for adding new shifts)
-    setSelectedShiftPreset(null);
+    // Try to match current shift to a preset, otherwise use custom times
+    const matchingPreset = workspace.shifts.find(
+      s => s.startTime === scheduleItem.startTime && s.endTime === scheduleItem.endTime
+    );
+    setEditSelectedShiftPreset(matchingPreset || null);
+    setIsEditShiftDropdownOpen(false);
+    setIsStartTimeDropdownOpen(false);
+    setIsEndTimeDropdownOpen(false);
     setCustomStartTime(scheduleItem.startTime || '09:00');
     setCustomEndTime(scheduleItem.endTime || '17:00');
 
@@ -431,12 +446,12 @@ export default function CalendarView({ workspace, onWorkspaceUpdate }) {
 
     let hours, startTime, endTime, shiftId, shiftName;
 
-    if (selectedShiftPreset) {
-      hours = selectedShiftPreset.hours;
-      startTime = selectedShiftPreset.startTime;
-      endTime = selectedShiftPreset.endTime;
-      shiftId = selectedShiftPreset.id;
-      shiftName = selectedShiftPreset.name;
+    if (editSelectedShiftPreset) {
+      hours = editSelectedShiftPreset.hours;
+      startTime = editSelectedShiftPreset.startTime;
+      endTime = editSelectedShiftPreset.endTime;
+      shiftId = editSelectedShiftPreset.id;
+      shiftName = editSelectedShiftPreset.name;
     } else {
       hours = calculateHours(customStartTime, customEndTime);
       if (hours <= 0) {
@@ -474,6 +489,10 @@ export default function CalendarView({ workspace, onWorkspaceUpdate }) {
       }
 
       setShowEditShiftModal(false);
+      setEditSelectedShiftPreset(null);
+      setIsEditShiftDropdownOpen(false);
+      setIsStartTimeDropdownOpen(false);
+      setIsEndTimeDropdownOpen(false);
     } catch (error) {
       console.error('Error updating shift:', error);
       Alert.alert(t('common.error'), t('calendar.errors.updateShift'));
@@ -510,6 +529,34 @@ export default function CalendarView({ workspace, onWorkspaceUpdate }) {
         }
       ]
     );
+  };
+
+  // Notes handlers
+  const handleOpenNotes = (shift) => {
+    setSelectedShiftForNotes(shift);
+    setShowNotesModal(true);
+  };
+
+  const handleSaveNotes = async (shift, updatedNotes) => {
+    try {
+      const updatedSchedule = workspace.schedule.map(item =>
+        item.id === shift.id ? { ...item, notes: updatedNotes } : item
+      );
+
+      await updateDoc(doc(db, 'workspaces', workspace.id), {
+        schedule: updatedSchedule
+      });
+
+      if (onWorkspaceUpdate) {
+        onWorkspaceUpdate({ ...workspace, schedule: updatedSchedule });
+      }
+
+      // Update the selected shift for notes to reflect changes
+      setSelectedShiftForNotes({ ...shift, notes: updatedNotes });
+    } catch (error) {
+      console.error('Error saving notes:', error);
+      throw error;
+    }
   };
 
   // Schedule Preset Functions
@@ -771,6 +818,8 @@ export default function CalendarView({ workspace, onWorkspaceUpdate }) {
                     ? formatTimeRange(schedule.startTime, schedule.endTime)
                     : null;
 
+                  const notesCount = schedule.notes?.length || 0;
+
                   return (
                     <TouchableOpacity
                       key={idx}
@@ -794,8 +843,28 @@ export default function CalendarView({ workspace, onWorkspaceUpdate }) {
                         )}
                         <Text style={styles(theme).shiftName}>{getTranslatedShiftName(schedule.shiftName)}</Text>
                       </View>
-                      <View style={styles(theme).hoursContainer}>
-                        <Text style={styles(theme).shiftHours}>{schedule.hours}h</Text>
+                      <View style={styles(theme).shiftRightSection}>
+                        <TouchableOpacity
+                          style={styles(theme).notesButton}
+                          onPress={(e) => {
+                            e.stopPropagation();
+                            handleOpenNotes(schedule);
+                          }}
+                        >
+                          <Ionicons
+                            name={notesCount > 0 ? "create" : "create-outline"}
+                            size={18}
+                            color={notesCount > 0 ? theme.primary : theme.textSecondary}
+                          />
+                          {notesCount > 0 && (
+                            <View style={styles(theme).notesBadge}>
+                              <Text style={styles(theme).notesBadgeText}>{notesCount}</Text>
+                            </View>
+                          )}
+                        </TouchableOpacity>
+                        <View style={styles(theme).hoursContainer}>
+                          <Text style={styles(theme).shiftHours}>{schedule.hours}h</Text>
+                        </View>
                       </View>
                     </TouchableOpacity>
                   );
@@ -989,7 +1058,11 @@ export default function CalendarView({ workspace, onWorkspaceUpdate }) {
       {viewMode === 'week' ? renderWeekView() : renderMonthView()}
 
       {/* Add Shift Modal */}
-      <Modal visible={showAddShiftModal} transparent animationType="slide" onRequestClose={() => setShowAddShiftModal(false)}>
+      <Modal visible={showAddShiftModal} transparent animationType="slide" onRequestClose={() => {
+        setShowAddShiftModal(false);
+        setIsAddStartTimeDropdownOpen(false);
+        setIsAddEndTimeDropdownOpen(false);
+      }}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles(theme).modalOverlay}
@@ -1014,7 +1087,7 @@ export default function CalendarView({ workspace, onWorkspaceUpdate }) {
                   {selectedEmployee ? (
                     <>
                       {selectedEmployee.photoURL ? (
-                        <Image source={{ uri: selectedEmployee.photoURL }} style={styles(theme).avatarSmallImage} />
+                        <OptimizedImage uri={selectedEmployee.photoURL} style={styles(theme).avatarSmallImage} />
                       ) : (
                         <View style={styles(theme).avatarSmall}>
                           <Text style={styles(theme).avatarSmallText}>{selectedEmployee.name.charAt(0)}</Text>
@@ -1052,7 +1125,7 @@ export default function CalendarView({ workspace, onWorkspaceUpdate }) {
                           }}
                         >
                           {employee.photoURL ? (
-                            <Image source={{ uri: employee.photoURL }} style={styles(theme).avatarSmallImage} />
+                            <OptimizedImage uri={employee.photoURL} style={styles(theme).avatarSmallImage} />
                           ) : (
                             <View style={styles(theme).avatarSmall}>
                               <Text style={styles(theme).avatarSmallText}>{employee.name.charAt(0)}</Text>
@@ -1083,6 +1156,8 @@ export default function CalendarView({ workspace, onWorkspaceUpdate }) {
                 onPress={() => {
                   setIsShiftDropdownOpen(!isShiftDropdownOpen);
                   setIsEmployeeDropdownOpen(false);
+                  setIsAddStartTimeDropdownOpen(false);
+                  setIsAddEndTimeDropdownOpen(false);
                 }}
               >
                 <View style={styles(theme).dropdownButtonContent}>
@@ -1123,8 +1198,9 @@ export default function CalendarView({ workspace, onWorkspaceUpdate }) {
                           ]}
                           onPress={() => {
                             setSelectedShiftPreset(shift);
-                            setCustomStartTime('09:00');
-                            setCustomEndTime('17:00');
+                            // Update custom times to match the preset
+                            if (shift.startTime) setCustomStartTime(shift.startTime);
+                            if (shift.endTime) setCustomEndTime(shift.endTime);
                             setIsShiftDropdownOpen(false);
                           }}
                         >
@@ -1157,59 +1233,121 @@ export default function CalendarView({ workspace, onWorkspaceUpdate }) {
 
             <Text style={styles(theme).orText}>{t('calendar.addShiftModal.or')}</Text>
 
-            <View style={styles(theme).timePickersRow}>
-              <View style={styles(theme).timePickerContainer}>
-                <Text style={styles(theme).timeLabel}>Start Time</Text>
-                <View style={styles(theme).pickerWrapper}>
-                  <Picker
-                    selectedValue={customStartTime}
-                    onValueChange={(value) => {
-                      setCustomStartTime(value);
-                      setSelectedShiftPreset(null);
-                    }}
-                    style={styles(theme).picker}
-                    dropdownIconColor={theme.text}
-                  >
-                    {timeOptions.map((time) => (
-                      <Picker.Item key={time} label={time} value={time} color={theme.text} />
-                    ))}
-                  </Picker>
-                </View>
+            {/* Time Dropdowns */}
+            <View style={styles(theme).timeDropdownsRow}>
+              {/* Start Time Dropdown */}
+              <View style={[styles(theme).timeDropdownContainer, { zIndex: isAddStartTimeDropdownOpen ? 1000 : 1 }]}>
+                <Text style={styles(theme).timeLabel}>Start</Text>
+                <TouchableOpacity
+                  style={styles(theme).timeDropdownButton}
+                  onPress={() => {
+                    setIsAddStartTimeDropdownOpen(!isAddStartTimeDropdownOpen);
+                    setIsAddEndTimeDropdownOpen(false);
+                    setIsShiftDropdownOpen(false);
+                    setIsEmployeeDropdownOpen(false);
+                  }}
+                >
+                  <Text style={styles(theme).timeDropdownText}>{customStartTime}</Text>
+                  <Ionicons
+                    name={isAddStartTimeDropdownOpen ? "chevron-up" : "chevron-down"}
+                    size={16}
+                    color={theme.textSecondary}
+                  />
+                </TouchableOpacity>
+                {isAddStartTimeDropdownOpen && (
+                  <View style={styles(theme).timeDropdownList}>
+                    <ScrollView style={styles(theme).timeDropdownScroll} nestedScrollEnabled={true}>
+                      {timeOptions.map((time) => (
+                        <TouchableOpacity
+                          key={time}
+                          style={[
+                            styles(theme).timeDropdownItem,
+                            customStartTime === time && styles(theme).timeDropdownItemSelected
+                          ]}
+                          onPress={() => {
+                            setCustomStartTime(time);
+                            setSelectedShiftPreset(null);
+                            setIsAddStartTimeDropdownOpen(false);
+                          }}
+                        >
+                          <Text style={[
+                            styles(theme).timeDropdownItemText,
+                            customStartTime === time && styles(theme).timeDropdownItemTextSelected
+                          ]}>
+                            {time}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                  </View>
+                )}
               </View>
 
-              <View style={styles(theme).timePickerContainer}>
-                <Text style={styles(theme).timeLabel}>End Time</Text>
-                <View style={styles(theme).pickerWrapper}>
-                  <Picker
-                    selectedValue={customEndTime}
-                    onValueChange={(value) => {
-                      setCustomEndTime(value);
-                      setSelectedShiftPreset(null);
-                    }}
-                    style={styles(theme).picker}
-                    dropdownIconColor={theme.text}
-                  >
-                    {timeOptions.map((time) => (
-                      <Picker.Item key={time} label={time} value={time} color={theme.text} />
-                    ))}
-                  </Picker>
-                </View>
-              </View>
-            </View>
-
-            {!selectedShiftPreset && (
-              <View style={styles(theme).hoursPreview}>
-                <Ionicons name="time" size={16} color={theme.primary} />
-                <Text style={styles(theme).hoursPreviewText}>
-                  Total: {calculateHours(customStartTime, customEndTime)} hours
+              {/* Hours Preview in middle */}
+              <View style={styles(theme).hoursPreviewCompact}>
+                <Ionicons name="time-outline" size={14} color={theme.primary} />
+                <Text style={styles(theme).hoursPreviewCompactText}>
+                  {calculateHours(customStartTime, customEndTime)}h
                 </Text>
               </View>
-            )}
+
+              {/* End Time Dropdown */}
+              <View style={[styles(theme).timeDropdownContainer, { zIndex: isAddEndTimeDropdownOpen ? 1000 : 1 }]}>
+                <Text style={styles(theme).timeLabel}>End</Text>
+                <TouchableOpacity
+                  style={styles(theme).timeDropdownButton}
+                  onPress={() => {
+                    setIsAddEndTimeDropdownOpen(!isAddEndTimeDropdownOpen);
+                    setIsAddStartTimeDropdownOpen(false);
+                    setIsShiftDropdownOpen(false);
+                    setIsEmployeeDropdownOpen(false);
+                  }}
+                >
+                  <Text style={styles(theme).timeDropdownText}>{customEndTime}</Text>
+                  <Ionicons
+                    name={isAddEndTimeDropdownOpen ? "chevron-up" : "chevron-down"}
+                    size={16}
+                    color={theme.textSecondary}
+                  />
+                </TouchableOpacity>
+                {isAddEndTimeDropdownOpen && (
+                  <View style={styles(theme).timeDropdownList}>
+                    <ScrollView style={styles(theme).timeDropdownScroll} nestedScrollEnabled={true}>
+                      {timeOptions.map((time) => (
+                        <TouchableOpacity
+                          key={time}
+                          style={[
+                            styles(theme).timeDropdownItem,
+                            customEndTime === time && styles(theme).timeDropdownItemSelected
+                          ]}
+                          onPress={() => {
+                            setCustomEndTime(time);
+                            setSelectedShiftPreset(null);
+                            setIsAddEndTimeDropdownOpen(false);
+                          }}
+                        >
+                          <Text style={[
+                            styles(theme).timeDropdownItemText,
+                            customEndTime === time && styles(theme).timeDropdownItemTextSelected
+                          ]}>
+                            {time}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                  </View>
+                )}
+              </View>
+            </View>
 
             <View style={styles(theme).modalButtons}>
               <TouchableOpacity
                 style={styles(theme).cancelButton}
-                onPress={() => setShowAddShiftModal(false)}
+                onPress={() => {
+                  setShowAddShiftModal(false);
+                  setIsAddStartTimeDropdownOpen(false);
+                  setIsAddEndTimeDropdownOpen(false);
+                }}
               >
                 <Text style={styles(theme).cancelButtonText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
@@ -1225,26 +1363,49 @@ export default function CalendarView({ workspace, onWorkspaceUpdate }) {
       </Modal>
 
       {/* Edit Shift Modal */}
-      <Modal visible={showEditShiftModal} transparent animationType="slide" onRequestClose={() => setShowEditShiftModal(false)}>
+      <Modal visible={showEditShiftModal} transparent animationType="slide" onRequestClose={() => {
+        setShowEditShiftModal(false);
+        setEditSelectedShiftPreset(null);
+        setIsEditShiftDropdownOpen(false);
+        setIsStartTimeDropdownOpen(false);
+        setIsEndTimeDropdownOpen(false);
+      }}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles(theme).modalOverlay}
         >
           <View style={styles(theme).modalContent}>
-            <Text style={styles(theme).modalTitle}>{t('calendar.editShiftModal.title')}</Text>
-            <Text style={styles(theme).modalSubtitle}>
-              {editingScheduleItem && new Date(editingScheduleItem.date).toLocaleDateString('en-US', {
-                weekday: 'long',
-                month: 'long',
-                day: 'numeric'
-              })}
-            </Text>
+            {/* Header with close button */}
+            <View style={styles(theme).modalHeader}>
+              <View>
+                <Text style={styles(theme).modalTitle}>{t('calendar.editShiftModal.title')}</Text>
+                <Text style={styles(theme).modalSubtitle}>
+                  {editingScheduleItem && new Date(editingScheduleItem.date).toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    month: 'long',
+                    day: 'numeric'
+                  })}
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={styles(theme).modalCloseButton}
+                onPress={() => {
+                  setShowEditShiftModal(false);
+                  setEditSelectedShiftPreset(null);
+                  setIsEditShiftDropdownOpen(false);
+                  setIsStartTimeDropdownOpen(false);
+                  setIsEndTimeDropdownOpen(false);
+                }}
+              >
+                <Ionicons name="close" size={24} color={theme.text} />
+              </TouchableOpacity>
+            </View>
 
             {/* Employee Display (not editable) */}
             <Text style={styles(theme).sectionLabel}>{t('calendar.editShiftModal.employee')}</Text>
             <View style={styles(theme).employeeDisplay}>
               {selectedEmployee?.photoURL ? (
-                <Image source={{ uri: selectedEmployee.photoURL }} style={styles(theme).avatarSmallImage} />
+                <OptimizedImage uri={selectedEmployee.photoURL} style={styles(theme).avatarSmallImage} />
               ) : (
                 <View style={styles(theme).avatarSmall}>
                   <Text style={styles(theme).avatarSmallText}>
@@ -1257,48 +1418,191 @@ export default function CalendarView({ workspace, onWorkspaceUpdate }) {
               </Text>
             </View>
 
-            {/* Total Hours Preview */}
-            <View style={styles(theme).hoursPreviewTop}>
-              <Ionicons name="time" size={16} color={theme.primary} />
-              <Text style={styles(theme).hoursPreviewTopText}>
-                {calculateHours(customStartTime, customEndTime)} {i18n.language === 'da' ? 'timer' : 'hours'}
-              </Text>
+            {/* Shift Preset Dropdown */}
+            <Text style={styles(theme).sectionLabel}>{t('calendar.addShiftModal.selectShiftDuration')}</Text>
+            <View style={{ zIndex: isEditShiftDropdownOpen ? 1000 : 1 }}>
+              <TouchableOpacity
+                style={styles(theme).dropdownButton}
+                onPress={() => {
+                  setIsEditShiftDropdownOpen(!isEditShiftDropdownOpen);
+                  setIsStartTimeDropdownOpen(false);
+                  setIsEndTimeDropdownOpen(false);
+                }}
+              >
+                <View style={styles(theme).dropdownButtonContent}>
+                  {editSelectedShiftPreset ? (
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles(theme).dropdownButtonText}>{editSelectedShiftPreset.name}</Text>
+                      {editSelectedShiftPreset.startTime && editSelectedShiftPreset.endTime && (
+                        <Text style={styles(theme).dropdownButtonSubtext}>
+                          {formatTimeRange(editSelectedShiftPreset.startTime, editSelectedShiftPreset.endTime)} • {editSelectedShiftPreset.hours}h
+                        </Text>
+                      )}
+                    </View>
+                  ) : (
+                    <Text style={styles(theme).dropdownButtonPlaceholder}>{t('calendar.addShiftModal.selectShiftDuration')}</Text>
+                  )}
+                </View>
+                <Ionicons
+                  name={isEditShiftDropdownOpen ? "chevron-up" : "chevron-down"}
+                  size={20}
+                  color={theme.textSecondary}
+                />
+              </TouchableOpacity>
+
+              {isEditShiftDropdownOpen && (
+                <View style={styles(theme).dropdownListContainer}>
+                  <ScrollView style={styles(theme).dropdownList} nestedScrollEnabled={true}>
+                    {workspace.shifts.map((shift) => {
+                      const timeRange = shift.startTime && shift.endTime
+                        ? formatTimeRange(shift.startTime, shift.endTime)
+                        : null;
+
+                      return (
+                        <TouchableOpacity
+                          key={shift.id}
+                          style={[
+                            styles(theme).shiftOption,
+                            editSelectedShiftPreset?.id === shift.id && styles(theme).shiftOptionSelected
+                          ]}
+                          onPress={() => {
+                            setEditSelectedShiftPreset(shift);
+                            if (shift.startTime) setCustomStartTime(shift.startTime);
+                            if (shift.endTime) setCustomEndTime(shift.endTime);
+                            setIsEditShiftDropdownOpen(false);
+                          }}
+                        >
+                          <View style={{ flex: 1 }}>
+                            <Text style={[
+                              styles(theme).shiftOptionText,
+                              editSelectedShiftPreset?.id === shift.id && styles(theme).shiftOptionTextSelected
+                            ]}>
+                              {shift.name}
+                            </Text>
+                            {timeRange && (
+                              <Text style={[
+                                styles(theme).shiftOptionSubtext,
+                                editSelectedShiftPreset?.id === shift.id && styles(theme).shiftOptionSubtextSelected
+                              ]}>
+                                {timeRange} • {shift.hours}h
+                              </Text>
+                            )}
+                          </View>
+                          {editSelectedShiftPreset?.id === shift.id && (
+                            <Ionicons name="checkmark-circle" size={20} color={theme.primary} />
+                          )}
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </ScrollView>
+                </View>
+              )}
             </View>
 
-            {/* Time Pickers */}
-            <View style={styles(theme).customShiftSection}>
-              <View style={styles(theme).timePickersRow}>
-                <View style={styles(theme).timePickerContainer}>
-                  <Text style={styles(theme).timeLabel}>Start Time</Text>
-                  <View style={styles(theme).pickerWrapper}>
-                    <Picker
-                      selectedValue={customStartTime}
-                      onValueChange={(value) => setCustomStartTime(value)}
-                      style={styles(theme).picker}
-                      dropdownIconColor={theme.text}
-                    >
-                      {timeOptions.map((time) => (
-                        <Picker.Item key={time} label={time} value={time} color={theme.text} />
-                      ))}
-                    </Picker>
-                  </View>
-                </View>
+            <Text style={styles(theme).orText}>{t('calendar.addShiftModal.or')}</Text>
 
-                <View style={styles(theme).timePickerContainer}>
-                  <Text style={styles(theme).timeLabel}>End Time</Text>
-                  <View style={styles(theme).pickerWrapper}>
-                    <Picker
-                      selectedValue={customEndTime}
-                      onValueChange={(value) => setCustomEndTime(value)}
-                      style={styles(theme).picker}
-                      dropdownIconColor={theme.text}
-                    >
+            {/* Time Dropdowns */}
+            <View style={styles(theme).timeDropdownsRow}>
+              {/* Start Time Dropdown */}
+              <View style={[styles(theme).timeDropdownContainer, { zIndex: isStartTimeDropdownOpen ? 1000 : 1 }]}>
+                <Text style={styles(theme).timeLabel}>Start</Text>
+                <TouchableOpacity
+                  style={styles(theme).timeDropdownButton}
+                  onPress={() => {
+                    setIsStartTimeDropdownOpen(!isStartTimeDropdownOpen);
+                    setIsEndTimeDropdownOpen(false);
+                    setIsEditShiftDropdownOpen(false);
+                  }}
+                >
+                  <Text style={styles(theme).timeDropdownText}>{customStartTime}</Text>
+                  <Ionicons
+                    name={isStartTimeDropdownOpen ? "chevron-up" : "chevron-down"}
+                    size={16}
+                    color={theme.textSecondary}
+                  />
+                </TouchableOpacity>
+                {isStartTimeDropdownOpen && (
+                  <View style={styles(theme).timeDropdownList}>
+                    <ScrollView style={styles(theme).timeDropdownScroll} nestedScrollEnabled={true}>
                       {timeOptions.map((time) => (
-                        <Picker.Item key={time} label={time} value={time} color={theme.text} />
+                        <TouchableOpacity
+                          key={time}
+                          style={[
+                            styles(theme).timeDropdownItem,
+                            customStartTime === time && styles(theme).timeDropdownItemSelected
+                          ]}
+                          onPress={() => {
+                            setCustomStartTime(time);
+                            setEditSelectedShiftPreset(null);
+                            setIsStartTimeDropdownOpen(false);
+                          }}
+                        >
+                          <Text style={[
+                            styles(theme).timeDropdownItemText,
+                            customStartTime === time && styles(theme).timeDropdownItemTextSelected
+                          ]}>
+                            {time}
+                          </Text>
+                        </TouchableOpacity>
                       ))}
-                    </Picker>
+                    </ScrollView>
                   </View>
-                </View>
+                )}
+              </View>
+
+              {/* Hours Preview in middle */}
+              <View style={styles(theme).hoursPreviewCompact}>
+                <Ionicons name="time-outline" size={14} color={theme.primary} />
+                <Text style={styles(theme).hoursPreviewCompactText}>
+                  {calculateHours(customStartTime, customEndTime)}h
+                </Text>
+              </View>
+
+              {/* End Time Dropdown */}
+              <View style={[styles(theme).timeDropdownContainer, { zIndex: isEndTimeDropdownOpen ? 1000 : 1 }]}>
+                <Text style={styles(theme).timeLabel}>End</Text>
+                <TouchableOpacity
+                  style={styles(theme).timeDropdownButton}
+                  onPress={() => {
+                    setIsEndTimeDropdownOpen(!isEndTimeDropdownOpen);
+                    setIsStartTimeDropdownOpen(false);
+                    setIsEditShiftDropdownOpen(false);
+                  }}
+                >
+                  <Text style={styles(theme).timeDropdownText}>{customEndTime}</Text>
+                  <Ionicons
+                    name={isEndTimeDropdownOpen ? "chevron-up" : "chevron-down"}
+                    size={16}
+                    color={theme.textSecondary}
+                  />
+                </TouchableOpacity>
+                {isEndTimeDropdownOpen && (
+                  <View style={styles(theme).timeDropdownList}>
+                    <ScrollView style={styles(theme).timeDropdownScroll} nestedScrollEnabled={true}>
+                      {timeOptions.map((time) => (
+                        <TouchableOpacity
+                          key={time}
+                          style={[
+                            styles(theme).timeDropdownItem,
+                            customEndTime === time && styles(theme).timeDropdownItemSelected
+                          ]}
+                          onPress={() => {
+                            setCustomEndTime(time);
+                            setEditSelectedShiftPreset(null);
+                            setIsEndTimeDropdownOpen(false);
+                          }}
+                        >
+                          <Text style={[
+                            styles(theme).timeDropdownItemText,
+                            customEndTime === time && styles(theme).timeDropdownItemTextSelected
+                          ]}>
+                            {time}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                  </View>
+                )}
               </View>
             </View>
 
@@ -1315,13 +1619,6 @@ export default function CalendarView({ workspace, onWorkspaceUpdate }) {
             >
               <Ionicons name="trash-outline" size={18} color={theme.error} />
               <Text style={styles(theme).deleteButtonText}>{t('calendar.editShiftModal.removeShift')}</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles(theme).cancelButtonSingle}
-              onPress={() => setShowEditShiftModal(false)}
-            >
-              <Text style={styles(theme).cancelButtonText}>{t('common.cancel')}</Text>
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
@@ -1613,6 +1910,18 @@ export default function CalendarView({ workspace, onWorkspaceUpdate }) {
           </View>
         </TouchableWithoutFeedback>
       </Modal>
+
+      {/* Shift Notes Modal */}
+      <ShiftNotesModal
+        visible={showNotesModal}
+        onClose={() => {
+          setShowNotesModal(false);
+          setSelectedShiftForNotes(null);
+        }}
+        shift={selectedShiftForNotes}
+        onSaveNote={handleSaveNotes}
+        allEmployees={getAllEmployeesIncludingOwner()}
+      />
     </View>
   );
 }
@@ -1782,6 +2091,34 @@ const styles = (theme) => StyleSheet.create({
     color: theme.textSecondary,
     fontSize: 13,
   },
+  shiftRightSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  notesButton: {
+    padding: 6,
+    borderRadius: 6,
+    backgroundColor: theme.background,
+    position: 'relative',
+  },
+  notesBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    backgroundColor: theme.primary,
+    borderRadius: 10,
+    minWidth: 16,
+    height: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+  },
+  notesBadgeText: {
+    color: '#000',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
   hoursContainer: {
     backgroundColor: theme.background,
     paddingHorizontal: 12,
@@ -1897,9 +2234,19 @@ const styles = (theme) => StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.border,
   },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 10,
+  },
+  modalCloseButton: {
+    padding: 4,
+    marginLeft: 12,
+  },
   modalTitle: {
     color: theme.text,
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 4,
   },
@@ -1910,10 +2257,10 @@ const styles = (theme) => StyleSheet.create({
   },
   sectionLabel: {
     color: theme.text,
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
-    marginBottom: 8,
-    marginTop: 8,
+    marginBottom: 6,
+    marginTop: 6,
   },
   employeeList: {
     maxHeight: 180,
@@ -1923,12 +2270,12 @@ const styles = (theme) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 14,
+    padding: 10,
     backgroundColor: theme.surface,
-    borderRadius: 12,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: theme.border,
-    marginBottom: 12,
+    marginBottom: 8,
   },
   dropdownButtonContent: {
     flexDirection: 'row',
@@ -2087,9 +2434,10 @@ const styles = (theme) => StyleSheet.create({
   },
   orText: {
     color: theme.textSecondary,
-    fontSize: 14,
+    fontSize: 12,
     textAlign: 'center',
-    marginVertical: 8,
+    alignSelf: 'center',
+    marginVertical: 6,
   },
   input: {
     backgroundColor: theme.background,
@@ -2139,7 +2487,7 @@ const styles = (theme) => StyleSheet.create({
     fontWeight: 'bold',
   },
   saveButton: {
-    padding: 16,
+    padding: 12,
     alignItems: 'center',
     borderRadius: 8,
     backgroundColor: theme.primary,
@@ -2147,25 +2495,24 @@ const styles = (theme) => StyleSheet.create({
   },
   saveButtonText: {
     color: '#000',
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: 'bold',
   },
   deleteButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    padding: 16,
+    gap: 6,
+    padding: 12,
     borderRadius: 8,
     backgroundColor: theme.primaryDark === '#1a2e1a' ? '#2e1a1a' : '#ffe0e0',
     borderWidth: 1,
     borderColor: theme.error,
-    marginTop: 12,
-    marginBottom: 12,
+    marginTop: 8,
   },
   deleteButtonText: {
     color: theme.error,
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
   },
   cancelButtonSingle: {
@@ -2178,16 +2525,16 @@ const styles = (theme) => StyleSheet.create({
   employeeDisplay: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    padding: 10,
     backgroundColor: theme.background,
     borderRadius: 8,
-    marginBottom: 16,
+    marginBottom: 8,
     borderWidth: 1,
     borderColor: theme.primary,
   },
   employeeDisplayText: {
     color: theme.primary,
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
   },
   // Preset styles
@@ -2306,45 +2653,129 @@ const styles = (theme) => StyleSheet.create({
   timePickersRow: {
     flexDirection: 'row',
     gap: 12,
-    marginBottom: 12,
+    marginBottom: 8,
   },
   timePickerContainer: {
     flex: 1,
   },
   timeLabel: {
     color: theme.text,
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
-    marginBottom: 8,
+    marginBottom: 4,
   },
   pickerWrapper: {
     backgroundColor: theme.background,
-    borderRadius: 10,
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: theme.border,
     overflow: 'hidden',
+    height: 44,
+    justifyContent: 'center',
+  },
+  // Time dropdown styles for edit modal
+  timeDropdownsRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    marginBottom: 12,
+  },
+  timeDropdownContainer: {
+    flex: 1,
+  },
+  timeDropdownButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: theme.surface,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: theme.border,
+  },
+  timeDropdownText: {
+    color: theme.text,
+    fontSize: 15,
+    fontWeight: '500',
+  },
+  timeDropdownList: {
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    right: 0,
+    marginTop: 4,
+    backgroundColor: theme.surface,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: theme.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  timeDropdownScroll: {
+    maxHeight: 150,
+  },
+  timeDropdownItem: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.border,
+  },
+  timeDropdownItemSelected: {
+    backgroundColor: theme.primaryDark,
+  },
+  timeDropdownItemText: {
+    color: theme.text,
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  timeDropdownItemTextSelected: {
+    color: theme.primary,
+    fontWeight: '600',
+  },
+  hoursPreviewCompact: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'flex-end',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+    backgroundColor: theme.primaryDark,
+    borderRadius: 8,
+  },
+  hoursPreviewCompactText: {
+    color: theme.primary,
+    fontSize: 13,
+    fontWeight: '600',
+    justifyContent: 'center',
   },
   picker: {
     color: theme.text,
     backgroundColor: theme.background,
+    height: 44,
+    marginTop: Platform.OS === 'android' ? -8 : 0,
   },
   hoursPreview: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    padding: 12,
+    gap: 6,
+    padding: 8,
     backgroundColor: theme.primaryDark,
-    borderRadius: 10,
-    marginBottom: 16,
+    borderRadius: 8,
+    marginBottom: 12,
   },
   hoursPreviewText: {
     color: theme.primary,
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
   },
   customShiftSection: {
-    marginBottom: 16,
+    marginBottom: 8,
   },
   hoursPreviewTop: {
     flexDirection: 'row',

@@ -530,7 +530,8 @@
       "enterName": "Indtast venligst et navn",
       "updateFailed": "Kunne ikke opdatere profil",
       "pickImageFailed": "Kunne ikke vælge billede",
-      "permissionRequired": "Tilladelse til at få adgang til kamerarullen er påkrævet!"
+      "permissionRequired": "Tilladelse til at få adgang til kamerarullen er påkrævet!",
+      "uploadFailed": "Kunne ikke uploade profilbillede. Prøv venligst igen."
     },
     "removePhotoConfirm": {
       "title": "Fjern profilbillede",
@@ -656,5 +657,19 @@
     "errorCreatingRequest": "Kunne ikke oprette vagtbytte-anmodning",
     "canOnlySwapOwnShifts": "Du kan kun bytte dine egne vagter",
     "error": "Fejl"
+  },
+  "shiftNotes": {
+    "title": "Vagt noter",
+    "noNotes": "Ingen noter endnu. Tilføj den første note!",
+    "addPlaceholder": "Skriv en note...",
+    "deleteNote": {
+      "title": "Slet note",
+      "message": "Er du sikker på, at du vil slette denne note?"
+    },
+    "errors": {
+      "emptyNote": "Indtast venligst en note",
+      "addFailed": "Kunne ikke tilføje note",
+      "deleteFailed": "Kunne ikke slette note"
+    }
   }
 }

@@ -206,6 +206,7 @@ const styles = (theme) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
+    gap: 12,
   },
   headerTextContainer: {
     flex: 1,

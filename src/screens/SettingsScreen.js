@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, StyleSheet, Image, Linking, Modal } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, StyleSheet, Linking, Modal, ActivityIndicator } from 'react-native';
 import { updateProfile, deleteUser, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
 import { doc, updateDoc, getDocs, query, collection, getDoc, deleteDoc } from 'firebase/firestore';
-import { auth, db } from '../config/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { auth, db, storage } from '../config/firebase';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useTranslation } from 'react-i18next';
 import * as ImagePicker from 'expo-image-picker';
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
+import OptimizedImage from '../components/OptimizedImage';
 
 export default function SettingsScreen({ onBack, onLogout, onNavigateToSubscription }) {
   const { theme, isDarkMode, toggleTheme } = useTheme();
@@ -16,6 +18,8 @@ export default function SettingsScreen({ onBack, onLogout, onNavigateToSubscript
   const { t } = useTranslation();
   const [name, setName] = useState('');
   const [profilePicture, setProfilePicture] = useState(null);
+  const [pendingImageUri, setPendingImageUri] = useState(null); // Local URI before upload
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletePassword, setDeletePassword] = useState('');
@@ -66,11 +70,36 @@ export default function SettingsScreen({ onBack, onLogout, onNavigateToSubscript
           [{ resize: { width: 200, height: 200 } }],
           { compress: 0.5, format: SaveFormat.JPEG }
         );
+        // Store local URI as pending - will upload on save
+        setPendingImageUri(manipulatedImage.uri);
         setProfilePicture(manipulatedImage.uri);
       }
     } catch (error) {
       console.error('Error picking image:', error);
       Alert.alert(t('common.error'), t('settings.errors.pickImageFailed'));
+    }
+  };
+
+  // Upload image to Firebase Storage and return download URL
+  const uploadProfileImage = async (localUri) => {
+    try {
+      const userId = auth.currentUser.uid;
+      // Use 'profileImages/{userId}' path to match storage rules
+      const storageRef = ref(storage, `profileImages/${userId}`);
+
+      // Fetch the local file and convert to blob
+      const response = await fetch(localUri);
+      const blob = await response.blob();
+
+      // Upload to Firebase Storage
+      await uploadBytes(storageRef, blob);
+
+      // Get the download URL
+      const downloadURL = await getDownloadURL(storageRef);
+      return downloadURL;
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      throw error;
     }
   };
 
@@ -83,7 +112,10 @@ export default function SettingsScreen({ onBack, onLogout, onNavigateToSubscript
         {
           text: t('common.delete'),
           style: 'destructive',
-          onPress: () => setProfilePicture(null)
+          onPress: () => {
+            setProfilePicture(null);
+            setPendingImageUri(null);
+          }
         }
       ]
     );
@@ -96,19 +128,39 @@ export default function SettingsScreen({ onBack, onLogout, onNavigateToSubscript
     }
 
     setLoading(true);
+    setUploadingImage(!!pendingImageUri);
+
     try {
       const userId = auth.currentUser.uid;
+
+      // If there's a pending image to upload, upload it first
+      let finalPhotoURL = profilePicture;
+      if (pendingImageUri) {
+        try {
+          finalPhotoURL = await uploadProfileImage(pendingImageUri);
+          setProfilePicture(finalPhotoURL);
+          setPendingImageUri(null);
+        } catch (uploadError) {
+          console.error('Error uploading profile picture:', uploadError);
+          Alert.alert(t('common.error'), t('settings.errors.uploadFailed'));
+          setLoading(false);
+          setUploadingImage(false);
+          return;
+        }
+      }
+
+      setUploadingImage(false);
 
       // Update Firebase Auth profile
       await updateProfile(auth.currentUser, {
         displayName: name,
-        photoURL: profilePicture,
+        photoURL: finalPhotoURL,
       });
 
       // Update Firestore users collection
       await updateDoc(doc(db, 'users', userId), {
         name: name,
-        photoURL: profilePicture || null,
+        photoURL: finalPhotoURL || null,
       });
 
       // Update all workspaces where this user is an employee
@@ -129,7 +181,7 @@ export default function SettingsScreen({ onBack, onLogout, onNavigateToSubscript
           employees[employeeIndex] = {
             ...employees[employeeIndex],
             name: name,
-            photoURL: profilePicture || null,
+            photoURL: finalPhotoURL || null,
           };
 
           // Update the workspace document
@@ -267,7 +319,7 @@ export default function SettingsScreen({ onBack, onLogout, onNavigateToSubscript
           <View style={styles(theme).profilePictureContainer}>
             <View style={styles(theme).profilePictureWrapper}>
               {profilePicture ? (
-                <Image source={{ uri: profilePicture }} style={styles(theme).profilePicture} />
+                <OptimizedImage uri={profilePicture} style={styles(theme).profilePicture} />
               ) : (
                 <View style={styles(theme).profilePicturePlaceholder}>
                   <Text style={styles(theme).profilePicturePlaceholderText}>
@@ -275,9 +327,15 @@ export default function SettingsScreen({ onBack, onLogout, onNavigateToSubscript
                   </Text>
                 </View>
               )}
+              {uploadingImage && (
+                <View style={styles(theme).uploadingOverlay}>
+                  <ActivityIndicator size="large" color={theme.primary} />
+                </View>
+              )}
               <TouchableOpacity
                 style={styles(theme).editProfilePictureButton}
                 onPress={handlePickImage}
+                disabled={loading}
               >
                 <Ionicons name="camera" size={20} color="#000" />
               </TouchableOpacity>
@@ -639,6 +697,19 @@ const styles = (theme) => StyleSheet.create({
     alignItems: 'center',
     borderWidth: 3,
     borderColor: theme.background,
+  },
+  uploadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   profilePictureActions: {
     alignItems: 'center',

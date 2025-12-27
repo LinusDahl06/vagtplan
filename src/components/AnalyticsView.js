@@ -1,10 +1,11 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Dimensions, Image, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Dimensions, StyleSheet } from 'react-native';
 import { BarChart, LineChart } from 'react-native-chart-kit';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { useTranslation } from 'react-i18next';
 import { getEmployeeColor } from '../utils/employeeColors';
+import OptimizedImage from './OptimizedImage';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -369,8 +370,8 @@ export default function AnalyticsView({ workspace, ownerInfo }) {
                             >
                               <View style={styles(theme).employeeInfo}>
                                 {employee?.photoURL ? (
-                                  <Image
-                                    source={{ uri: employee.photoURL }}
+                                  <OptimizedImage
+                                    uri={employee.photoURL}
                                     style={styles(theme).avatarTinyImage}
                                   />
                                 ) : (
@@ -452,7 +453,7 @@ export default function AnalyticsView({ workspace, ownerInfo }) {
                       }}
                     >
                       {emp.photoURL ? (
-                        <Image source={{ uri: emp.photoURL }} style={styles(theme).avatarTinyImage} />
+                        <OptimizedImage uri={emp.photoURL} style={styles(theme).avatarTinyImage} />
                       ) : (
                         <View style={styles(theme).avatarTiny}>
                           <Text style={styles(theme).avatarTinyText}>{emp.name.charAt(0)}</Text>

@@ -530,7 +530,8 @@
       "enterName": "Please enter a name",
       "updateFailed": "Failed to update profile",
       "pickImageFailed": "Failed to pick image",
-      "permissionRequired": "Permission to access camera roll is required!"
+      "permissionRequired": "Permission to access camera roll is required!",
+      "uploadFailed": "Failed to upload profile picture. Please try again."
     },
     "removePhotoConfirm": {
       "title": "Remove Profile Picture",
@@ -656,5 +657,19 @@
     "errorCreatingRequest": "Failed to create shift swap request",
     "canOnlySwapOwnShifts": "You can only swap your own shifts",
     "error": "Error"
+  },
+  "shiftNotes": {
+    "title": "Shift Notes",
+    "noNotes": "No notes yet. Add the first note!",
+    "addPlaceholder": "Write a note...",
+    "deleteNote": {
+      "title": "Delete Note",
+      "message": "Are you sure you want to delete this note?"
+    },
+    "errors": {
+      "emptyNote": "Please enter a note",
+      "addFailed": "Failed to add note",
+      "deleteFailed": "Failed to delete note"
+    }
   }
 }
