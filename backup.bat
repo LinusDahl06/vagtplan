@@ -6,8 +6,8 @@ echo.
 
 cd /d "j:\Apps\vagtplan-new"
 
-echo Adding all changes...
-git add .
+echo Adding ALL files (including untracked)...
+git add -A
 
 echo.
 echo Creating backup commit...
