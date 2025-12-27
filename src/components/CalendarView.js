@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Modal, StyleSheet, TextInput, Alert, KeyboardAvoidingView, Platform, Image } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TouchableWithoutFeedback, Modal, StyleSheet, TextInput, Alert, KeyboardAvoidingView, Platform, Image, Keyboard } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { Ionicons } from '@expo/vector-icons';
-import { doc, updateDoc, getDoc } from 'firebase/firestore';
+import { doc, updateDoc, getDoc, onSnapshot } from 'firebase/firestore';
 import { db, auth } from '../config/firebase';
 import { useTheme } from '../context/ThemeContext';
 import { useTranslation } from 'react-i18next';
 import { getEmployeeColor, getColorWithAlpha, getVibrantColor } from '../utils/employeeColors';
 import { calculateHours, formatTimeRange, generateTimeOptions } from '../utils/timeUtils';
+import { createShiftSwapRequest } from '../utils/shiftSwapService';
 
 export default function CalendarView({ workspace, onWorkspaceUpdate }) {
   const { theme } = useTheme();
@@ -30,6 +31,14 @@ export default function CalendarView({ workspace, onWorkspaceUpdate }) {
   const [selectedPreset, setSelectedPreset] = useState(null);
   const [showDayShiftsModal, setShowDayShiftsModal] = useState(false);
   const [selectedDayShifts, setSelectedDayShifts] = useState([]);
+  const [isEmployeeDropdownOpen, setIsEmployeeDropdownOpen] = useState(false);
+  const [isShiftDropdownOpen, setIsShiftDropdownOpen] = useState(false);
+  const [showShiftSwapModal, setShowShiftSwapModal] = useState(false);
+  const [selectedShiftForSwap, setSelectedShiftForSwap] = useState(null);
+  const [swapMessage, setSwapMessage] = useState('');
+
+  const scrollViewRef = React.useRef(null);
+  const todayCardRef = React.useRef(null);
 
   const timeOptions = generateTimeOptions();
 
@@ -54,6 +63,42 @@ export default function CalendarView({ workspace, onWorkspaceUpdate }) {
 
     fetchOwnerInfo();
   }, [workspace.ownerId]);
+
+  // Real-time workspace listener
+  useEffect(() => {
+    if (!workspace.id) return;
+
+    const workspaceRef = doc(db, 'workspaces', workspace.id);
+    const unsubscribe = onSnapshot(workspaceRef, (docSnapshot) => {
+      if (docSnapshot.exists()) {
+        const updatedWorkspace = { id: docSnapshot.id, ...docSnapshot.data() };
+        if (onWorkspaceUpdate) {
+          onWorkspaceUpdate(updatedWorkspace);
+        }
+      }
+    }, (error) => {
+      console.error('Error listening to workspace updates:', error);
+    });
+
+    return () => unsubscribe();
+  }, [workspace.id]);
+
+  // Auto-scroll to today's date on mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (todayCardRef.current && scrollViewRef.current) {
+        todayCardRef.current.measureLayout(
+          scrollViewRef.current,
+          (_x, y) => {
+            scrollViewRef.current.scrollTo({ y: y - 20, animated: true });
+          },
+          () => {}
+        );
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [currentWeek, viewMode]);
 
   function getCurrentWeek() {
     const today = new Date();
@@ -254,6 +299,8 @@ export default function CalendarView({ workspace, onWorkspaceUpdate }) {
     setSelectedShiftPreset(null);
     setCustomStartTime('09:00');
     setCustomEndTime('17:00');
+    setIsEmployeeDropdownOpen(false);
+    setIsShiftDropdownOpen(false);
     setShowAddShiftModal(true);
   };
 
@@ -656,14 +703,53 @@ export default function CalendarView({ workspace, onWorkspaceUpdate }) {
     );
   };
 
+  const handleShiftLongPress = (schedule) => {
+    // Only allow swapping your own shifts
+    if (schedule.employeeId !== auth.currentUser.uid) {
+      Alert.alert(t('shiftSwap.error'), t('shiftSwap.canOnlySwapOwnShifts'));
+      return;
+    }
+
+    setSelectedShiftForSwap(schedule);
+    setSwapMessage('');
+    setShowShiftSwapModal(true);
+  };
+
+  const handleCreateShiftSwap = async () => {
+    if (!selectedShiftForSwap) return;
+
+    try {
+      const result = await createShiftSwapRequest({
+        workspaceId: workspace.id,
+        workspaceName: workspace.name,
+        myShift: selectedShiftForSwap,
+        targetEmployeeId: null,
+        targetEmployeeName: '',
+        message: swapMessage
+      });
+
+      if (result.success) {
+        Alert.alert(t('common.success'), t('shiftSwap.requestCreated'));
+        setShowShiftSwapModal(false);
+        setSelectedShiftForSwap(null);
+        setSwapMessage('');
+      } else {
+        Alert.alert(t('common.error'), result.error || t('shiftSwap.errorCreatingRequest'));
+      }
+    } catch (error) {
+      console.error('Error creating shift swap:', error);
+      Alert.alert(t('common.error'), t('shiftSwap.errorCreatingRequest'));
+    }
+  };
+
   const renderWeekView = () => (
-    <ScrollView style={styles(theme).scrollableContent} showsVerticalScrollIndicator={false}>
+    <ScrollView ref={scrollViewRef} style={styles(theme).scrollableContent} showsVerticalScrollIndicator={false}>
       {currentWeek.map((date, index) => {
         const schedules = getScheduleForDate(date);
         const today = isToday(date);
 
         return (
-          <View key={index} style={[styles(theme).dayCard, today && styles(theme).todayCard]}>
+          <View key={index} ref={today ? todayCardRef : null} style={[styles(theme).dayCard, today && styles(theme).todayCard]}>
             <View style={styles(theme).dayHeaderContainer}>
               <Text style={[styles(theme).dayDate, today && styles(theme).todayText]}>
                 {formatFullDate(date)}
@@ -692,11 +778,12 @@ export default function CalendarView({ workspace, onWorkspaceUpdate }) {
                         styles(theme).scheduleItem,
                         {
                           backgroundColor: getColorWithAlpha(employeeColor, 0.15, isCurrentUser),
-                          borderLeftWidth: 4,
+                          borderLeftWidth: 6,
                           borderLeftColor: displayColor
                         }
                       ]}
                       onPress={() => canManageSchedule && handleOpenEditShift(schedule)}
+                      onLongPress={() => handleShiftLongPress(schedule)}
                     >
                       <View style={styles(theme).scheduleInfo}>
                         <Text style={[styles(theme).employeeName, { color: theme.text }]}>
@@ -715,12 +802,14 @@ export default function CalendarView({ workspace, onWorkspaceUpdate }) {
                 })
               )}
 
-              <TouchableOpacity
-                style={styles(theme).addShiftButton}
-                onPress={() => handleOpenAddShift(date)}
-              >
-                <Text style={styles(theme).addShiftText}>{t('calendar.addShift')}</Text>
-              </TouchableOpacity>
+              {canManageSchedule && (
+                <TouchableOpacity
+                  style={styles(theme).addShiftButton}
+                  onPress={() => handleOpenAddShift(date)}
+                >
+                  <Text style={styles(theme).addShiftText}>{t('calendar.addShift')}</Text>
+                </TouchableOpacity>
+              )}
             </View>
           </View>
         );
@@ -771,12 +860,13 @@ export default function CalendarView({ workspace, onWorkspaceUpdate }) {
                     // Show shifts for this day
                     setSelectedDayShifts(schedules);
                     setShowDayShiftsModal(true);
-                  } else {
-                    // Open add shift modal
+                  } else if (canManageSchedule) {
+                    // Open add shift modal only if user has permission
                     handleOpenAddShift(dayInfo.date);
                   }
                 }}
                 activeOpacity={0.7}
+                disabled={!hasShifts && !canManageSchedule}
               >
                 <Text style={[
                   styles(theme).monthDayNumber,
@@ -910,86 +1000,160 @@ export default function CalendarView({ workspace, onWorkspaceUpdate }) {
               {selectedDate && formatFullDate(selectedDate)}
             </Text>
 
-            {/* Employee Selection */}
+            {/* Employee Selection Dropdown */}
             <Text style={styles(theme).sectionLabel}>{t('calendar.addShiftModal.selectEmployee')}</Text>
-            <ScrollView style={styles(theme).employeeList}>
-              {selectedDate && getAvailableEmployees(selectedDate).length === 0 ? (
-                <Text style={styles(theme).noEmployeesText}>{t('calendar.addShiftModal.allEmployeesScheduled')}</Text>
-              ) : (
-                selectedDate && getAvailableEmployees(selectedDate).map((employee) => (
-                  <TouchableOpacity
-                    key={employee.userId}
-                    style={[
-                      styles(theme).employeeOption,
-                      selectedEmployee?.userId === employee.userId && styles(theme).employeeOptionSelected
-                    ]}
-                    onPress={() => setSelectedEmployee(employee)}
-                  >
-                    {employee.photoURL ? (
-                      <Image source={{ uri: employee.photoURL }} style={styles(theme).avatarSmallImage} />
+            <View style={{ zIndex: isEmployeeDropdownOpen ? 1000 : 1 }}>
+              <TouchableOpacity
+                style={styles(theme).dropdownButton}
+                onPress={() => {
+                  setIsEmployeeDropdownOpen(!isEmployeeDropdownOpen);
+                  setIsShiftDropdownOpen(false);
+                }}
+              >
+                <View style={styles(theme).dropdownButtonContent}>
+                  {selectedEmployee ? (
+                    <>
+                      {selectedEmployee.photoURL ? (
+                        <Image source={{ uri: selectedEmployee.photoURL }} style={styles(theme).avatarSmallImage} />
+                      ) : (
+                        <View style={styles(theme).avatarSmall}>
+                          <Text style={styles(theme).avatarSmallText}>{selectedEmployee.name.charAt(0)}</Text>
+                        </View>
+                      )}
+                      <Text style={styles(theme).dropdownButtonText}>{selectedEmployee.name}</Text>
+                    </>
+                  ) : (
+                    <Text style={styles(theme).dropdownButtonPlaceholder}>{t('calendar.addShiftModal.selectEmployee')}</Text>
+                  )}
+                </View>
+                <Ionicons
+                  name={isEmployeeDropdownOpen ? "chevron-up" : "chevron-down"}
+                  size={20}
+                  color={theme.textSecondary}
+                />
+              </TouchableOpacity>
+
+              {isEmployeeDropdownOpen && (
+                <View style={styles(theme).dropdownListContainer}>
+                  <ScrollView style={styles(theme).dropdownList} nestedScrollEnabled={true}>
+                    {selectedDate && getAvailableEmployees(selectedDate).length === 0 ? (
+                      <Text style={styles(theme).noEmployeesText}>{t('calendar.addShiftModal.allEmployeesScheduled')}</Text>
                     ) : (
-                      <View style={styles(theme).avatarSmall}>
-                        <Text style={styles(theme).avatarSmallText}>{employee.name.charAt(0)}</Text>
-                      </View>
+                      selectedDate && getAvailableEmployees(selectedDate).map((employee) => (
+                        <TouchableOpacity
+                          key={employee.userId}
+                          style={[
+                            styles(theme).employeeOption,
+                            selectedEmployee?.userId === employee.userId && styles(theme).employeeOptionSelected
+                          ]}
+                          onPress={() => {
+                            setSelectedEmployee(employee);
+                            setIsEmployeeDropdownOpen(false);
+                          }}
+                        >
+                          {employee.photoURL ? (
+                            <Image source={{ uri: employee.photoURL }} style={styles(theme).avatarSmallImage} />
+                          ) : (
+                            <View style={styles(theme).avatarSmall}>
+                              <Text style={styles(theme).avatarSmallText}>{employee.name.charAt(0)}</Text>
+                            </View>
+                          )}
+                          <Text style={[
+                            styles(theme).employeeOptionText,
+                            selectedEmployee?.userId === employee.userId && styles(theme).employeeOptionTextSelected
+                          ]}>
+                            {employee.name}
+                          </Text>
+                          {selectedEmployee?.userId === employee.userId && (
+                            <Ionicons name="checkmark-circle" size={20} color={theme.primary} />
+                          )}
+                        </TouchableOpacity>
+                      ))
                     )}
-                    <Text style={[
-                      styles(theme).employeeOptionText,
-                      selectedEmployee?.userId === employee.userId && styles(theme).employeeOptionTextSelected
-                    ]}>
-                      {employee.name}
-                    </Text>
-                    {selectedEmployee?.userId === employee.userId && (
-                      <Ionicons name="checkmark-circle" size={20} color={theme.primary} />
-                    )}
-                  </TouchableOpacity>
-                ))
+                  </ScrollView>
+                </View>
               )}
-            </ScrollView>
+            </View>
 
-            {/* Shift Selection */}
+            {/* Shift Selection Dropdown */}
             <Text style={styles(theme).sectionLabel}>{t('calendar.addShiftModal.selectShiftDuration')}</Text>
-            <ScrollView style={styles(theme).shiftPresetList}>
-              {workspace.shifts.map((shift) => {
-                const timeRange = shift.startTime && shift.endTime
-                  ? formatTimeRange(shift.startTime, shift.endTime)
-                  : null;
-
-                return (
-                  <TouchableOpacity
-                    key={shift.id}
-                    style={[
-                      styles(theme).shiftOption,
-                      selectedShiftPreset?.id === shift.id && styles(theme).shiftOptionSelected
-                    ]}
-                    onPress={() => {
-                      setSelectedShiftPreset(shift);
-                      setCustomStartTime('09:00');
-                      setCustomEndTime('17:00');
-                    }}
-                  >
+            <View style={{ zIndex: isShiftDropdownOpen ? 1000 : 1 }}>
+              <TouchableOpacity
+                style={styles(theme).dropdownButton}
+                onPress={() => {
+                  setIsShiftDropdownOpen(!isShiftDropdownOpen);
+                  setIsEmployeeDropdownOpen(false);
+                }}
+              >
+                <View style={styles(theme).dropdownButtonContent}>
+                  {selectedShiftPreset ? (
                     <View style={{ flex: 1 }}>
-                      <Text style={[
-                        styles(theme).shiftOptionText,
-                        selectedShiftPreset?.id === shift.id && styles(theme).shiftOptionTextSelected
-                      ]}>
-                        {shift.name}
-                      </Text>
-                      {timeRange && (
-                        <Text style={[
-                          styles(theme).shiftOptionSubtext,
-                          selectedShiftPreset?.id === shift.id && styles(theme).shiftOptionSubtextSelected
-                        ]}>
-                          {timeRange} • {shift.hours}
+                      <Text style={styles(theme).dropdownButtonText}>{selectedShiftPreset.name}</Text>
+                      {selectedShiftPreset.startTime && selectedShiftPreset.endTime && (
+                        <Text style={styles(theme).dropdownButtonSubtext}>
+                          {formatTimeRange(selectedShiftPreset.startTime, selectedShiftPreset.endTime)} • {selectedShiftPreset.hours}h
                         </Text>
                       )}
                     </View>
-                    {selectedShiftPreset?.id === shift.id && (
-                      <Ionicons name="checkmark-circle" size={20} color={theme.primary} />
-                    )}
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
+                  ) : (
+                    <Text style={styles(theme).dropdownButtonPlaceholder}>{t('calendar.addShiftModal.selectShiftDuration')}</Text>
+                  )}
+                </View>
+                <Ionicons
+                  name={isShiftDropdownOpen ? "chevron-up" : "chevron-down"}
+                  size={20}
+                  color={theme.textSecondary}
+                />
+              </TouchableOpacity>
+
+              {isShiftDropdownOpen && (
+                <View style={styles(theme).dropdownListContainer}>
+                  <ScrollView style={styles(theme).dropdownList} nestedScrollEnabled={true}>
+                    {workspace.shifts.map((shift) => {
+                      const timeRange = shift.startTime && shift.endTime
+                        ? formatTimeRange(shift.startTime, shift.endTime)
+                        : null;
+
+                      return (
+                        <TouchableOpacity
+                          key={shift.id}
+                          style={[
+                            styles(theme).shiftOption,
+                            selectedShiftPreset?.id === shift.id && styles(theme).shiftOptionSelected
+                          ]}
+                          onPress={() => {
+                            setSelectedShiftPreset(shift);
+                            setCustomStartTime('09:00');
+                            setCustomEndTime('17:00');
+                            setIsShiftDropdownOpen(false);
+                          }}
+                        >
+                          <View style={{ flex: 1 }}>
+                            <Text style={[
+                              styles(theme).shiftOptionText,
+                              selectedShiftPreset?.id === shift.id && styles(theme).shiftOptionTextSelected
+                            ]}>
+                              {shift.name}
+                            </Text>
+                            {timeRange && (
+                              <Text style={[
+                                styles(theme).shiftOptionSubtext,
+                                selectedShiftPreset?.id === shift.id && styles(theme).shiftOptionSubtextSelected
+                              ]}>
+                                {timeRange} • {shift.hours}h
+                              </Text>
+                            )}
+                          </View>
+                          {selectedShiftPreset?.id === shift.id && (
+                            <Ionicons name="checkmark-circle" size={20} color={theme.primary} />
+                          )}
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </ScrollView>
+                </View>
+              )}
+            </View>
 
             <Text style={styles(theme).orText}>{t('calendar.addShiftModal.or')}</Text>
 
@@ -1321,8 +1485,14 @@ export default function CalendarView({ workspace, onWorkspaceUpdate }) {
                       { borderLeftColor: employee.color, borderLeftWidth: 4 }
                     ]}
                     onPress={() => {
+                      if (canManageSchedule) {
+                        setShowDayShiftsModal(false);
+                        handleOpenEditShift(schedule);
+                      }
+                    }}
+                    onLongPress={() => {
                       setShowDayShiftsModal(false);
-                      handleOpenEditShift(schedule);
+                      handleShiftLongPress(schedule);
                     }}
                     activeOpacity={0.7}
                   >
@@ -1344,19 +1514,21 @@ export default function CalendarView({ workspace, onWorkspaceUpdate }) {
               })}
             </ScrollView>
 
-            <TouchableOpacity
-              style={styles(theme).addShiftFromDayButton}
-              onPress={() => {
-                if (selectedDayShifts.length > 0 && selectedDayShifts[0].date) {
-                  const date = new Date(selectedDayShifts[0].date);
-                  setShowDayShiftsModal(false);
-                  handleOpenAddShift(date);
-                }
-              }}
-            >
-              <Ionicons name="add-circle-outline" size={20} color="#fff" />
-              <Text style={styles(theme).addShiftFromDayButtonText}>{t('calendar.addShift')}</Text>
-            </TouchableOpacity>
+            {canManageSchedule && (
+              <TouchableOpacity
+                style={styles(theme).addShiftFromDayButton}
+                onPress={() => {
+                  if (selectedDayShifts.length > 0 && selectedDayShifts[0].date) {
+                    const date = new Date(selectedDayShifts[0].date);
+                    setShowDayShiftsModal(false);
+                    handleOpenAddShift(date);
+                  }
+                }}
+              >
+                <Ionicons name="add-circle-outline" size={20} color="#fff" />
+                <Text style={styles(theme).addShiftFromDayButtonText}>{t('calendar.addShift')}</Text>
+              </TouchableOpacity>
+            )}
 
             <TouchableOpacity
               style={styles(theme).dayShiftsCloseButton}
@@ -1366,6 +1538,80 @@ export default function CalendarView({ workspace, onWorkspaceUpdate }) {
             </TouchableOpacity>
           </View>
         </View>
+      </Modal>
+
+      {/* Shift Swap Modal */}
+      <Modal visible={showShiftSwapModal} transparent animationType="slide" onRequestClose={() => setShowShiftSwapModal(false)}>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <View style={styles(theme).shiftSwapModalOverlay}>
+            <TouchableWithoutFeedback>
+              <View style={styles(theme).shiftSwapModalContent}>
+                {/* Header */}
+                <View style={styles(theme).shiftSwapModalHeader}>
+                  <Text style={styles(theme).shiftSwapModalTitle}>{t('shiftSwap.createRequest')}</Text>
+                </View>
+
+                {/* Content */}
+                <View style={styles(theme).shiftSwapModalBody}>
+                  {selectedShiftForSwap && (
+                    <View style={styles(theme).shiftSwapShiftInfo}>
+                      <Text style={styles(theme).shiftSwapLabel}>{t('shiftSwap.yourShift')}</Text>
+                      <View style={styles(theme).shiftSwapShiftCard}>
+                        <Text style={styles(theme).shiftSwapShiftDate}>
+                          {new Date(selectedShiftForSwap.date).toLocaleDateString(i18n.language === 'da' ? 'da-DK' : 'en-US', {
+                            weekday: 'long',
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          })}
+                        </Text>
+                        <Text style={styles(theme).shiftSwapShiftName}>{getTranslatedShiftName(selectedShiftForSwap.shiftName)}</Text>
+                        {selectedShiftForSwap.startTime && selectedShiftForSwap.endTime && (
+                          <Text style={styles(theme).shiftSwapShiftTime}>
+                            {formatTimeRange(selectedShiftForSwap.startTime, selectedShiftForSwap.endTime)} ({selectedShiftForSwap.hours}{i18n.language === 'da' ? 't' : 'h'})
+                          </Text>
+                        )}
+                      </View>
+                    </View>
+                  )}
+
+                  {/* Optional Message */}
+                  <View style={styles(theme).messageContainer}>
+                    <Text style={styles(theme).shiftSwapLabel}>{t('shiftSwap.messageOptional')}</Text>
+                    <TextInput
+                      style={styles(theme).messageInput}
+                      value={swapMessage}
+                      onChangeText={setSwapMessage}
+                      placeholder={t('shiftSwap.messagePlaceholder')}
+                      placeholderTextColor={theme.textSecondary}
+                      multiline
+                      numberOfLines={3}
+                      returnKeyType="done"
+                      submitBehavior="submit"
+                      onSubmitEditing={Keyboard.dismiss}
+                    />
+                  </View>
+                </View>
+
+                {/* Footer Buttons */}
+                <View style={styles(theme).shiftSwapModalFooter}>
+                  <TouchableOpacity
+                    style={styles(theme).shiftSwapCancelButton}
+                    onPress={() => setShowShiftSwapModal(false)}
+                  >
+                    <Text style={styles(theme).shiftSwapCancelButtonText}>{t('common.cancel')}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles(theme).shiftSwapSendButton}
+                    onPress={handleCreateShiftSwap}
+                  >
+                    <Text style={styles(theme).shiftSwapSendButtonText}>{t('shiftSwap.sendRequest')}</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
       </Modal>
     </View>
   );
@@ -1673,19 +1919,107 @@ const styles = (theme) => StyleSheet.create({
     maxHeight: 180,
     marginBottom: 12,
   },
+  dropdownButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 14,
+    backgroundColor: theme.surface,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: theme.border,
+    marginBottom: 12,
+  },
+  dropdownButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    gap: 12,
+  },
+  dropdownButtonText: {
+    color: theme.text,
+    fontSize: 15,
+    fontWeight: '500',
+  },
+  dropdownButtonSubtext: {
+    color: theme.textSecondary,
+    fontSize: 13,
+    marginTop: 2,
+  },
+  dropdownButtonPlaceholder: {
+    color: theme.textSecondary,
+    fontSize: 15,
+  },
+  dropdownListContainer: {
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    right: 0,
+    backgroundColor: theme.surface,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: theme.border,
+    marginTop: 4,
+    maxHeight: 300,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+    zIndex: 1000,
+    overflow: 'hidden',
+  },
+  dropdownList: {
+    maxHeight: 300,
+    borderRadius: 12,
+  },
+  dropdownScrollView: {
+    maxHeight: 300,
+  },
+  dropdownItem: {
+    padding: 14,
+    backgroundColor: theme.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.border,
+    borderLeftWidth: 2,
+    borderLeftColor: theme.border,
+  },
+  dropdownItemText: {
+    color: theme.text,
+    fontSize: 15,
+    fontWeight: '500',
+  },
+  dropdownEmployeeInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  dropdownEmployeePhoto: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 2,
+    borderColor: theme.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dropdownEmployeeInitial: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
   employeeOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
-    backgroundColor: theme.background,
-    borderRadius: 8,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: theme.border,
+    padding: 14,
+    backgroundColor: theme.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.border,
   },
   employeeOptionSelected: {
-    borderColor: theme.primary,
     backgroundColor: theme.primaryDark,
+    borderLeftWidth: 3,
+    borderLeftColor: theme.primary,
   },
   avatarSmall: {
     width: 32,
@@ -1725,16 +2059,15 @@ const styles = (theme) => StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 12,
-    backgroundColor: theme.background,
-    borderRadius: 8,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: theme.border,
+    padding: 14,
+    backgroundColor: theme.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.border,
   },
   shiftOptionSelected: {
-    borderColor: theme.primary,
     backgroundColor: theme.primaryDark,
+    borderLeftWidth: 3,
+    borderLeftColor: theme.primary,
   },
   shiftOptionText: {
     color: theme.text,
@@ -2138,5 +2471,174 @@ const styles = (theme) => StyleSheet.create({
     borderRadius: 12,
     marginHorizontal: 20,
     alignItems: 'center',
+  },
+  // Shift Swap Modal Styles
+  shiftSwapModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  shiftSwapModalContent: {
+    backgroundColor: theme.surface,
+    borderRadius: 20,
+    width: '100%',
+    maxWidth: 400,
+  },
+  shiftSwapModalHeader: {
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.border,
+    alignItems: 'center',
+  },
+  shiftSwapModalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: theme.text,
+  },
+  shiftSwapModalBody: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 16,
+  },
+  shiftSwapShiftInfo: {
+    marginBottom: 16,
+  },
+  shiftSwapLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: theme.text,
+    marginBottom: 8,
+  },
+  shiftSwapShiftCard: {
+    backgroundColor: theme.background,
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: theme.border,
+  },
+  shiftSwapShiftDate: {
+    fontSize: 12,
+    color: theme.textSecondary,
+    marginBottom: 3,
+  },
+  shiftSwapShiftName: {
+    fontSize: 15,
+    color: theme.text,
+    fontWeight: 'bold',
+    marginBottom: 2,
+  },
+  shiftSwapShiftTime: {
+    fontSize: 12,
+    color: theme.textSecondary,
+  },
+  swapTypeContainer: {
+    marginBottom: 16,
+  },
+  swapTypeButtons: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  swapTypeButton: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: theme.border,
+    backgroundColor: theme.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  swapTypeButtonActive: {
+    backgroundColor: theme.primary,
+    borderColor: theme.primary,
+  },
+  swapTypeButtonText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: theme.text,
+  },
+  swapTypeButtonTextActive: {
+    color: '#000',
+  },
+  employeePickerContainer: {
+    marginBottom: 16,
+  },
+  swapEmployeePickerContainer: {
+    marginBottom: 16,
+  },
+  swapEmployeeDropdownList: {
+    backgroundColor: theme.surface,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: theme.border,
+    marginTop: 4,
+    maxHeight: 200,
+    overflow: 'hidden',
+  },
+  employeePicker: {
+    backgroundColor: theme.background,
+    borderWidth: 1,
+    borderColor: theme.border,
+    borderRadius: 10,
+    color: theme.text,
+  },
+  messageContainer: {
+    marginBottom: 16,
+  },
+  messageInput: {
+    backgroundColor: theme.background,
+    borderWidth: 1,
+    borderColor: theme.border,
+    borderRadius: 8,
+    padding: 10,
+    fontSize: 14,
+    color: theme.text,
+    minHeight: 70,
+    maxHeight: 70,
+    textAlignVertical: 'top',
+  },
+  shiftSwapModalFooter: {
+    flexDirection: 'row',
+    gap: 10,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    paddingBottom: 20,
+    borderTopWidth: 1,
+    borderTopColor: theme.border,
+    backgroundColor: theme.surface,
+  },
+  shiftSwapCancelButton: {
+    flex: 1,
+    backgroundColor: theme.background,
+    borderWidth: 1,
+    borderColor: theme.border,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  shiftSwapCancelButtonText: {
+    color: theme.text,
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  shiftSwapSendButton: {
+    flex: 1,
+    backgroundColor: theme.primary,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  shiftSwapSendButtonText: {
+    color: '#000',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  shiftSwapSendButtonDisabled: {
+    opacity: 0.5,
   },
 });

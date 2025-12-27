@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Modal, TextInput, Alert, StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, onSnapshot } from 'firebase/firestore';
 import { db, auth } from '../config/firebase';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
@@ -18,6 +18,25 @@ export default function ShiftsView({ workspace, onWorkspaceUpdate }) {
   const [endTime, setEndTime] = useState('17:00');
   const [selectedShift, setSelectedShift] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  // Real-time workspace listener
+  useEffect(() => {
+    if (!workspace.id) return;
+
+    const workspaceRef = doc(db, 'workspaces', workspace.id);
+    const unsubscribe = onSnapshot(workspaceRef, (docSnapshot) => {
+      if (docSnapshot.exists()) {
+        const updatedWorkspace = { id: docSnapshot.id, ...docSnapshot.data() };
+        if (onWorkspaceUpdate) {
+          onWorkspaceUpdate(updatedWorkspace);
+        }
+      }
+    }, (error) => {
+      console.error('Error listening to workspace updates:', error);
+    });
+
+    return () => unsubscribe();
+  }, [workspace.id]);
 
   const timeOptions = generateTimeOptions();
 
@@ -164,19 +183,19 @@ export default function ShiftsView({ workspace, onWorkspaceUpdate }) {
         <View style={styles(theme).headerContent}>
           <View style={styles(theme).headerTextContainer}>
             <Text style={styles(theme).headerTitle}>{t('shifts.title')}</Text>
-            <Text style={styles(theme).headerSubtitle}>
-              {t('shifts.count', { count: workspace.shifts.length })}
-            </Text>
           </View>
           <View style={styles(theme).headerIcon}>
-            <Ionicons name="time" size={32} color={theme.primary} />
+            <Ionicons name="time" size={24} color={theme.primary} />
           </View>
         </View>
       </View>
 
-      <Text style={styles(theme).description}>
-        {t('shifts.description')}
-      </Text>
+      <View style={styles(theme).infoCard}>
+        <Ionicons name="information-circle-outline" size={20} color={theme.primary} />
+        <Text style={styles(theme).infoText}>
+          {t('shifts.description')}
+        </Text>
+      </View>
 
       {workspace.shifts.length === 0 ? (
         <View style={styles(theme).emptyState}>
@@ -481,7 +500,7 @@ const styles = (theme) => StyleSheet.create({
     backgroundColor: theme.surface,
     borderBottomWidth: 1,
     borderBottomColor: theme.border,
-    padding: 20,
+    padding: 16,
   },
   headerContent: {
     flexDirection: 'row',
@@ -493,28 +512,38 @@ const styles = (theme) => StyleSheet.create({
   },
   headerTitle: {
     color: theme.text,
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   headerSubtitle: {
     color: theme.textSecondary,
-    fontSize: 14,
+    fontSize: 13,
   },
   headerIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: theme.primaryDark,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  description: {
-    color: theme.textSecondary,
+  infoCard: {
+    flexDirection: 'row',
+    backgroundColor: theme.surface2,
+    borderRadius: 10,
+    padding: 14,
+    margin: 16,
+    marginBottom: 8,
+    gap: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#2a4a2a',
+  },
+  infoText: {
+    color: theme.primary,
     fontSize: 13,
-    padding: 16,
-    paddingTop: 12,
-    lineHeight: 20,
+    flex: 1,
   },
   emptyState: {
     alignItems: 'center',

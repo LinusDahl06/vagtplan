@@ -6,6 +6,8 @@ import WorkspaceOverviewScreen from './src/screens/WorkspaceOverviewScreen';
 import WorkspaceScreen from './src/screens/WorkspaceScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import SubscriptionScreen from './src/screens/SubscriptionScreen';
+import NotificationSettingsScreen from './src/screens/NotificationSettingsScreen';
+import ShiftSwapScreen from './src/screens/ShiftSwapScreen';
 import { ThemeProvider } from './src/context/ThemeContext';
 import { LanguageProvider } from './src/context/LanguageContext';
 
@@ -16,6 +18,8 @@ export default function App() {
   const [workspaces, setWorkspaces] = useState([]);
   const [showSettings, setShowSettings] = useState(false);
   const [showSubscription, setShowSubscription] = useState(false);
+  const [showNotificationSettings, setShowNotificationSettings] = useState(false);
+  const [showShiftSwap, setShowShiftSwap] = useState(false);
 
   const handleWorkspaceUpdate = (updatedWorkspace) => {
     setWorkspaces(workspaces.map(w =>
@@ -28,6 +32,8 @@ export default function App() {
     setUser(null);
     setShowSettings(false);
     setShowSubscription(false);
+    setShowNotificationSettings(false);
+    setShowShiftSwap(false);
     setSelectedWorkspace(null);
     setCurrentScreen('login');
   };
@@ -56,6 +62,26 @@ export default function App() {
       );
     }
 
+    if (showShiftSwap) {
+      return (
+        <ShiftSwapScreen
+          onBack={() => setShowShiftSwap(false)}
+          workspace={selectedWorkspace}
+        />
+      );
+    }
+
+    if (showNotificationSettings) {
+      return (
+        <NotificationSettingsScreen
+          onBack={() => {
+            setShowNotificationSettings(false);
+            setShowSettings(true);
+          }}
+        />
+      );
+    }
+
     if (showSettings) {
       return (
         <SettingsScreen
@@ -64,6 +90,10 @@ export default function App() {
           onNavigateToSubscription={() => {
             setShowSettings(false);
             setShowSubscription(true);
+          }}
+          onNavigateToNotifications={() => {
+            setShowSettings(false);
+            setShowNotificationSettings(true);
           }}
         />
       );
@@ -85,6 +115,7 @@ export default function App() {
         workspace={selectedWorkspace}
         onBack={() => setSelectedWorkspace(null)}
         onWorkspaceUpdate={handleWorkspaceUpdate}
+        onNavigateToShiftSwap={() => setShowShiftSwap(true)}
       />
     );
   };

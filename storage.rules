@@ -21,7 +21,20 @@ service firebase.storage {
       return request.resource.contentType.matches('image/.*');
     }
 
-    // Profile pictures
+    // Profile pictures (both old and new paths for compatibility)
+    match /profileImages/{userId} {
+      // Users can read any profile picture (they're public)
+      allow read: if true;
+
+      // Users can only upload to their own profile picture directory
+      allow create, update: if isOwner(userId) &&
+                              isValidImageSize() &&
+                              isValidImageType();
+
+      // Users can delete their own profile pictures
+      allow delete: if isOwner(userId);
+    }
+
     match /profile-pictures/{userId}/{allPaths=**} {
       // Users can read any profile picture (they're public)
       allow read: if true;

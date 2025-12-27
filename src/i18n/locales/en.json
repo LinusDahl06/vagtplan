@@ -170,7 +170,14 @@
       "calendar": "Calendar",
       "employees": "Employees",
       "analytics": "Analytics",
-      "settings": "Settings"
+      "settings": "Settings",
+      "roles": "Roles",
+      "shifts": "Shifts",
+      "schedule": "Schedule"
+    },
+    "removed": {
+      "title": "Removed from Workspace",
+      "message": "You have been removed from this workspace by an administrator."
     }
   },
   "calendar": {
@@ -289,7 +296,9 @@
       "alreadyAdded": "This user is already an employee",
       "addFailed": "Failed to add employee",
       "removeFailed": "Failed to remove employee",
-      "updateRoleFailed": "Failed to update employee role"
+      "updateRoleFailed": "Failed to update employee role",
+      "invitationPending": "An invitation has already been sent to this user",
+      "inviteFailed": "Failed to send invitation"
     },
     "removeConfirm": {
       "title": "Remove Employee",
@@ -299,6 +308,33 @@
       "added": "Employee added successfully!",
       "removed": "Employee removed",
       "roleUpdated": "Employee role updated"
+    },
+    "invitationSent": {
+      "title": "Invitation Sent",
+      "message": "{{name}} will receive an invitation to join this workspace"
+    }
+  },
+  "invitations": {
+    "workspaceInvite": "Workspace Invitation",
+    "invitedYouTo": "invited you to",
+    "selectEmployee": "Select Employee",
+    "accepted": {
+      "title": "Invitation Accepted",
+      "message": "You've joined {{workspace}}!"
+    },
+    "declined": {
+      "title": "Invitation Declined",
+      "message": "You declined the invitation to {{workspace}}"
+    },
+    "decline": {
+      "confirmTitle": "Decline Invitation",
+      "confirmMessage": "Are you sure you want to decline the invitation to {{workspace}}?",
+      "confirmButton": "Decline"
+    },
+    "errors": {
+      "workspaceNotFound": "Workspace no longer exists",
+      "acceptFailed": "Failed to accept invitation",
+      "declineFailed": "Failed to decline invitation"
     }
   },
   "roles": {
@@ -421,6 +457,8 @@
   },
   "scheduleManagement": {
     "title": "Schedule Management",
+    "subtitle": "Manage and clear schedules",
+    "infoCard": "Use these tools to clear schedules for specific months or all schedules. These actions cannot be undone.",
     "clearMonth": {
       "title": "Clear Month Schedule",
       "description": "Remove all shifts for a specific month. This action cannot be undone.",
@@ -501,6 +539,18 @@
     "logoutConfirm": {
       "title": "Logout",
       "message": "Are you sure you want to logout?"
+    },
+    "deleteAccount": {
+      "title": "Delete Account",
+      "description": "Permanently delete your account",
+      "warning": "This will permanently delete your account, remove you from all workspaces, and delete any workspaces you own. This action cannot be undone.",
+      "confirm": "Delete My Account",
+      "confirmTitle": "Enter Password",
+      "confirmMessage": "Enter your password to confirm account deletion",
+      "passwordRequired": "Password is required",
+      "wrongPassword": "Incorrect password. Please try again.",
+      "failed": "Failed to delete account. Please try again.",
+      "success": "Your account has been deleted"
     }
   },
   "defaultRoles": {
@@ -561,5 +611,50 @@
       "success": "Subscription updated (Demo mode)",
       "button": "Demo Change"
     }
+  },
+  "shiftSwap": {
+    "title": "Shift Swap",
+    "incoming": "Incoming Requests",
+    "sent": "Sent Requests",
+    "noIncoming": "No incoming swap requests",
+    "noSent": "No sent swap requests",
+    "pending": "Pending",
+    "openSwap": "Open Swap",
+    "myShift": "My Shift",
+    "theirShift": "Their Shift",
+    "yourShift": "Your Shift",
+    "requestedTo": "Requested to",
+    "accept": "Accept",
+    "decline": "Decline",
+    "cancelRequest": "Cancel Request",
+    "acceptConfirm": {
+      "title": "Accept Shift Swap",
+      "message": "Are you sure you want to accept this shift swap?"
+    },
+    "declineConfirm": {
+      "title": "Decline Shift Swap",
+      "message": "Are you sure you want to decline this shift swap?"
+    },
+    "cancelConfirm": {
+      "title": "Cancel Request",
+      "message": "Are you sure you want to cancel this swap request?"
+    },
+    "acceptSuccess": "Shift swap accepted successfully!",
+    "declineSuccess": "Shift swap declined",
+    "acceptError": "Failed to accept shift swap",
+    "declineError": "Failed to decline shift swap",
+    "cancelError": "Failed to cancel request",
+    "createRequest": "Create Shift Swap Request",
+    "swapType": "Swap Type",
+    "specificEmployee": "Specific Employee",
+    "selectEmployee": "Select Employee",
+    "selectEmployeePlaceholder": "Select an employee...",
+    "messageOptional": "Message (Optional)",
+    "messagePlaceholder": "Add a message to your swap request...",
+    "sendRequest": "Send Request",
+    "requestCreated": "Shift swap request created successfully!",
+    "errorCreatingRequest": "Failed to create shift swap request",
+    "canOnlySwapOwnShifts": "You can only swap your own shifts",
+    "error": "Error"
   }
 }

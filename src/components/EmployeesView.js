@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, Modal, ActivityIndicator, StyleSheet } from 'react-native';
-import { collection, getDocs, doc, query, where, updateDoc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, query, where, updateDoc, getDoc, addDoc, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { useTranslation } from 'react-i18next';
-import { getEmployeeColor, getColorWithAlpha } from '../utils/employeeColors';
+import { getEmployeeColor } from '../utils/employeeColors';
 import OptimizedImage from './OptimizedImage';
 import { canWorkspaceAddEmployee, getDefaultSubscriptionTier } from '../utils/subscriptions';
 
@@ -24,6 +24,25 @@ export default function EmployeesView({ workspace, onWorkspaceUpdate, ownerInfo 
   useEffect(() => {
     loadOwnerSubscription();
   }, [workspace.ownerId]);
+
+  // Real-time workspace listener
+  useEffect(() => {
+    if (!workspace.id) return;
+
+    const workspaceRef = doc(db, 'workspaces', workspace.id);
+    const unsubscribe = onSnapshot(workspaceRef, (docSnapshot) => {
+      if (docSnapshot.exists()) {
+        const updatedWorkspace = { id: docSnapshot.id, ...docSnapshot.data() };
+        if (onWorkspaceUpdate) {
+          onWorkspaceUpdate(updatedWorkspace);
+        }
+      }
+    }, (error) => {
+      console.error('Error listening to workspace updates:', error);
+    });
+
+    return () => unsubscribe();
+  }, [workspace.id]);
 
   const loadOwnerSubscription = async () => {
     try {
@@ -126,34 +145,56 @@ export default function EmployeesView({ workspace, onWorkspaceUpdate, ownerInfo 
         return;
       }
 
+      // Check for existing pending invitation
+      const invitationsRef = collection(db, 'workspaceInvitations');
+      const invitationQuery = query(
+        invitationsRef,
+        where('workspaceId', '==', workspace.id),
+        where('invitedUserId', '==', userId),
+        where('status', '==', 'pending')
+      );
+      const existingInvitations = await getDocs(invitationQuery);
+
+      if (!existingInvitations.empty) {
+        Alert.alert(t('common.error'), t('employees.errors.invitationPending'));
+        setLoading(false);
+        return;
+      }
+
       const defaultRole = workspace.roles.find(r => r.name === 'Employee') || workspace.roles[workspace.roles.length - 1];
 
-      const newEmployee = {
-        userId: userId,
-        username: userData.username,
-        name: userData.name,
-        email: userData.email,
-        photoURL: userData.photoURL || null,
+      // Get current user info
+      const currentUserDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
+      const currentUserData = currentUserDoc.data();
+
+      // Create invitation instead of directly adding employee
+      const invitation = {
+        workspaceId: workspace.id,
+        workspaceName: workspace.name,
+        invitedUserId: userId,
+        invitedUsername: userData.username,
+        invitedName: userData.name,
+        invitedEmail: userData.email,
+        invitedPhotoURL: userData.photoURL || null,
+        invitedBy: auth.currentUser.uid,
+        inviterName: currentUserData.name,
         roleId: defaultRole.id,
-        color: getEmployeeColor(userId),
-        addedAt: new Date().toISOString()
+        status: 'pending',
+        createdAt: new Date().toISOString()
       };
 
-      const updatedEmployees = [...workspace.employees, newEmployee];
+      await addDoc(collection(db, 'workspaceInvitations'), invitation);
 
-      await updateDoc(doc(db, 'workspaces', workspace.id), {
-        employees: updatedEmployees
-      });
-
-      if (onWorkspaceUpdate) {
-        onWorkspaceUpdate({ ...workspace, employees: updatedEmployees });
-      }
+      Alert.alert(
+        t('employees.invitationSent.title'),
+        t('employees.invitationSent.message', { name: userData.name })
+      );
 
       setSearchUsername('');
       setShowAddModal(false);
     } catch (error) {
-      console.error('Error adding employee:', error);
-      Alert.alert(t('common.error'), t('employees.errors.addFailed'));
+      console.error('Error sending invitation:', error);
+      Alert.alert(t('common.error'), t('employees.errors.inviteFailed'));
     } finally {
       setLoading(false);
     }
@@ -229,7 +270,7 @@ export default function EmployeesView({ workspace, onWorkspaceUpdate, ownerInfo 
             <Text style={styles(theme).headerSubtitle}>{allEmployees.length} {allEmployees.length === 1 ? t('common.member') : t('common.members')}</Text>
           </View>
           <View style={styles(theme).headerStats}>
-            <Ionicons name="people" size={32} color={theme.primary} />
+            <Ionicons name="people" size={24} color={theme.primary} />
           </View>
         </View>
       </View>
@@ -258,7 +299,10 @@ export default function EmployeesView({ workspace, onWorkspaceUpdate, ownerInfo 
             {allEmployees.map((employee, index) => {
               const isOwnerEmployee = employee.userId === workspace.ownerId;
               return (
-                <View key={employee.userId} style={styles(theme).employeeCard}>
+                <View key={employee.userId} style={[
+                  styles(theme).employeeCard,
+                  { borderLeftWidth: 6, borderLeftColor: employee.color }
+                ]}>
                   <View style={styles(theme).employeeInfo}>
                     {employee.photoURL ? (
                       <OptimizedImage
@@ -300,22 +344,6 @@ export default function EmployeesView({ workspace, onWorkspaceUpdate, ownerInfo 
                         <View style={styles(theme).roleBadgeContainer}>
                           <Ionicons name="briefcase-outline" size={12} color={theme.primary} />
                           <Text style={styles(theme).roleBadgeText}>{getRoleName(employee.roleId)}</Text>
-                        </View>
-                        <View
-                          style={[
-                            styles(theme).colorBadge,
-                            {
-                              backgroundColor: getColorWithAlpha(employee.color, 0.2),
-                              borderColor: employee.color
-                            }
-                          ]}
-                        >
-                          <View
-                            style={[
-                              styles(theme).colorDot,
-                              { backgroundColor: employee.color }
-                            ]}
-                          />
                         </View>
                       </View>
                     </View>
@@ -484,7 +512,7 @@ const styles = (theme) => StyleSheet.create({
     backgroundColor: theme.surface,
     borderBottomWidth: 1,
     borderBottomColor: theme.border,
-    padding: 20,
+    padding: 16,
   },
   headerContent: {
     flexDirection: 'row',
@@ -496,18 +524,18 @@ const styles = (theme) => StyleSheet.create({
   },
   headerTitle: {
     color: theme.text,
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   headerSubtitle: {
     color: theme.textSecondary,
-    fontSize: 14,
+    fontSize: 13,
   },
   headerStats: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: theme.primaryDark,
     justifyContent: 'center',
     alignItems: 'center',

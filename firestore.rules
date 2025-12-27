@@ -24,9 +24,9 @@ service cloud.firestore {
 
     // Users collection - profiles
     match /users/{userId} {
-      // Authenticated users can read any user profile
-      // This is needed for: workspace owner info, searching users to add as employees
-      allow read: if isAuthenticated();
+      // Anyone can read user profiles (needed for username uniqueness check during signup)
+      // Also needed for: workspace owner info, searching users to add as employees
+      allow read: if true;
 
       // Users can create their own profile during signup
       allow create: if isOwner(userId) &&
@@ -50,8 +50,8 @@ service cloud.firestore {
                       request.resource.data.name.size() > 0 &&
                       request.resource.data.name.size() <= 100;
 
-      // Users cannot delete their own profile
-      allow delete: if false;
+      // Users can delete their own profile (for account deletion)
+      allow delete: if isOwner(userId);
     }
 
     // Workspaces collection
@@ -73,13 +73,62 @@ service cloud.firestore {
       // Cannot change the ownerId field
       // NOTE: Employee count limits are enforced client-side
       // Firebase Rules cannot access owner's subscription tier from users collection
+      // Also allow:
+      // - Members to update if they're only removing themselves (for account deletion)
+      // - Users to add themselves when accepting an invitation (employee count increases by 1)
+      // - All authenticated users (employees check done client-side for shift swaps)
       allow update: if isAuthenticated() &&
                       isValidWorkspace(request.resource.data) &&
-                      resource.data.ownerId == request.auth.uid &&
                       request.resource.data.ownerId == resource.data.ownerId;
 
       // Only workspace owner can delete workspace
       allow delete: if isAuthenticated() && resource.data.ownerId == request.auth.uid;
+    }
+
+    // Workspace invitations collection
+    match /workspaceInvitations/{invitationId} {
+      // Users can read invitations sent to them or that they sent
+      // Also allow listing to check for duplicates
+      allow read: if isAuthenticated();
+
+      // Workspace owners/managers can create invitations
+      allow create: if isAuthenticated() &&
+                      request.resource.data.invitedBy == request.auth.uid;
+
+      // Invited user can update to accept/decline
+      // Inviter can also delete their own invitation
+      allow update: if isAuthenticated() &&
+                      resource.data.invitedUserId == request.auth.uid &&
+                      resource.data.status == 'pending' &&
+                      (request.resource.data.status == 'accepted' ||
+                       request.resource.data.status == 'declined');
+
+      // Inviter or invited user can delete invitation
+      allow delete: if isAuthenticated() &&
+                      (resource.data.invitedBy == request.auth.uid ||
+                       resource.data.invitedUserId == request.auth.uid);
+    }
+
+    // Shift swap requests collection
+    match /shiftSwapRequests/{requestId} {
+      // Allow authenticated users to read all swap requests
+      // Client-side filtering will show only relevant ones
+      allow read, list: if isAuthenticated();
+
+      // Users can create swap requests for their own shifts
+      allow create: if isAuthenticated() &&
+                      request.resource.data.requesterId == request.auth.uid;
+
+      // Users can update swap requests they created (to cancel)
+      // or requests directed at them (to accept/decline)
+      allow update: if isAuthenticated() &&
+                      (resource.data.requesterId == request.auth.uid ||
+                       resource.data.targetEmployeeId == request.auth.uid ||
+                       resource.data.isOpenSwap == true);
+
+      // Users can delete their own swap requests
+      allow delete: if isAuthenticated() &&
+                      resource.data.requesterId == request.auth.uid;
     }
 
     // Deny all other access

@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert, TextInput, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, onSnapshot } from 'firebase/firestore';
 import { db, auth } from '../config/firebase';
 import { useTheme } from '../context/ThemeContext';
 import { useTranslation } from 'react-i18next';
@@ -19,6 +19,25 @@ export default function ScheduleManagementView({ workspace, onWorkspaceUpdate })
   const currentUserEmployee = workspace.employees.find(emp => emp.userId === auth.currentUser.uid);
   const currentUserRole = workspace.roles.find(r => r.id === currentUserEmployee?.roleId);
   const canManageSchedule = isOwner || currentUserRole?.permissions.includes('manage_schedule');
+
+  // Real-time workspace listener
+  useEffect(() => {
+    if (!workspace.id) return;
+
+    const workspaceRef = doc(db, 'workspaces', workspace.id);
+    const unsubscribe = onSnapshot(workspaceRef, (docSnapshot) => {
+      if (docSnapshot.exists()) {
+        const updatedWorkspace = { id: docSnapshot.id, ...docSnapshot.data() };
+        if (onWorkspaceUpdate) {
+          onWorkspaceUpdate(updatedWorkspace);
+        }
+      }
+    }, (error) => {
+      console.error('Error listening to workspace updates:', error);
+    });
+
+    return () => unsubscribe();
+  }, [workspace.id]);
 
   const handleClearAllSchedules = async () => {
     const confirmKeyword = t('scheduleManagement.clearAll.confirmKeyword');
@@ -100,9 +119,23 @@ export default function ScheduleManagementView({ workspace, onWorkspaceUpdate })
 
   return (
     <View style={styles(theme).container}>
+      {/* Header */}
       <View style={styles(theme).header}>
-        <Ionicons name="calendar-clear-outline" size={24} color={theme.primary} />
-        <Text style={styles(theme).headerTitle}>{t('scheduleManagement.title')}</Text>
+        <View style={styles(theme).headerContent}>
+          <View style={styles(theme).headerTextContainer}>
+            <Text style={styles(theme).headerTitle}>{t('scheduleManagement.title')}</Text>
+          </View>
+          <View style={styles(theme).headerIcon}>
+            <Ionicons name="calendar" size={24} color={theme.primary} />
+          </View>
+        </View>
+      </View>
+
+      <View style={styles(theme).infoCard}>
+        <Ionicons name="information-circle-outline" size={20} color={theme.primary} />
+        <Text style={styles(theme).infoText}>
+          {t('scheduleManagement.infoCard')}
+        </Text>
       </View>
 
       {/* Clear Month Schedule - For managers */}
@@ -269,27 +302,64 @@ export default function ScheduleManagementView({ workspace, onWorkspaceUpdate })
 
 const styles = (theme) => StyleSheet.create({
   container: {
-    padding: 16,
+    flex: 1,
+    backgroundColor: theme.background,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 20,
-    paddingBottom: 12,
+    backgroundColor: theme.surface,
     borderBottomWidth: 1,
     borderBottomColor: theme.border,
+    padding: 16,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  headerTextContainer: {
+    flex: 1,
   },
   headerTitle: {
     color: theme.text,
     fontSize: 20,
     fontWeight: 'bold',
+    marginBottom: 2,
+  },
+  headerSubtitle: {
+    color: theme.textSecondary,
+    fontSize: 13,
+  },
+  headerIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: theme.primaryDark,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  infoCard: {
+    flexDirection: 'row',
+    backgroundColor: theme.surface2,
+    borderRadius: 10,
+    padding: 14,
+    margin: 16,
+    marginBottom: 0,
+    gap: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#2a4a2a',
+  },
+  infoText: {
+    color: theme.primary,
+    fontSize: 13,
+    flex: 1,
   },
   section: {
     backgroundColor: theme.surface,
     borderRadius: 12,
     padding: 16,
-    marginBottom: 16,
+    marginHorizontal: 16,
+    marginTop: 16,
     borderWidth: 1,
     borderColor: theme.border,
   },

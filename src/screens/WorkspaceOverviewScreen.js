@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Modal, StyleSheet } from 'react-native';
-import { collection, addDoc, getDocs, deleteDoc, doc, query, where, updateDoc, getDoc } from 'firebase/firestore';
+import { collection, addDoc, getDocs, deleteDoc, doc, query, where, updateDoc, getDoc, arrayUnion, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
@@ -10,6 +10,7 @@ import { getColorWithAlpha, getEmployeeColor } from '../utils/employeeColors';
 import { getTotalMemberCount } from '../utils/workspaceHelpers';
 import { formatTimeRange } from '../utils/timeUtils';
 import { canCreateWorkspace, getUserWorkspaceCount, getDefaultSubscriptionTier } from '../utils/subscriptions';
+import PendingInvitations from '../components/PendingInvitations';
 
 export default function WorkspaceOverviewScreen({ workspaces, setWorkspaces, onSelectWorkspace, onNavigateToSettings }) {
   const { theme } = useTheme();
@@ -22,10 +23,62 @@ export default function WorkspaceOverviewScreen({ workspaces, setWorkspaces, onS
   const [loading, setLoading] = useState(true);
   const [todayShifts, setTodayShifts] = useState([]);
   const [userSubscriptionTier, setUserSubscriptionTier] = useState(getDefaultSubscriptionTier());
+  const [pendingInvitations, setPendingInvitations] = useState([]);
 
   useEffect(() => {
-    loadWorkspaces();
     loadUserSubscription();
+
+    const currentUserId = auth.currentUser.uid;
+
+    // Real-time invitations listener
+    const invitationsQuery = query(
+      collection(db, 'workspaceInvitations'),
+      where('invitedUserId', '==', currentUserId),
+      where('status', '==', 'pending')
+    );
+
+    const unsubscribeInvitations = onSnapshot(invitationsQuery, (snapshot) => {
+      const invitations = [];
+      snapshot.forEach((doc) => {
+        invitations.push({ id: doc.id, ...doc.data() });
+      });
+      setPendingInvitations(invitations);
+    });
+
+    // Listen to owned workspaces
+    const ownedQuery = query(
+      collection(db, 'workspaces'),
+      where('ownerId', '==', currentUserId)
+    );
+
+    // Listen to all workspaces (to catch where user is an employee)
+    const allWorkspacesQuery = collection(db, 'workspaces');
+
+    const unsubscribeOwned = onSnapshot(ownedQuery, () => {
+      loadWorkspaces();
+    });
+
+    const unsubscribeAll = onSnapshot(allWorkspacesQuery, (snapshot) => {
+      // Only reload if changes affect current user's workspaces
+      let shouldReload = false;
+      snapshot.docChanges().forEach((change) => {
+        const workspace = change.doc.data();
+        const isEmployee = workspace.employees?.some(emp => emp.userId === currentUserId);
+        if (isEmployee || workspace.ownerId === currentUserId) {
+          shouldReload = true;
+        }
+      });
+
+      if (shouldReload) {
+        loadWorkspaces();
+      }
+    });
+
+    return () => {
+      unsubscribeInvitations();
+      unsubscribeOwned();
+      unsubscribeAll();
+    };
   }, []);
 
   useEffect(() => {
@@ -43,6 +96,27 @@ export default function WorkspaceOverviewScreen({ workspaces, setWorkspaces, onS
       }
     } catch (error) {
       console.error('Error loading user subscription:', error);
+    }
+  };
+
+  const loadPendingInvitations = async () => {
+    try {
+      const invitationsRef = collection(db, 'workspaceInvitations');
+      const q = query(
+        invitationsRef,
+        where('invitedUserId', '==', auth.currentUser.uid),
+        where('status', '==', 'pending')
+      );
+      const querySnapshot = await getDocs(q);
+
+      const invitations = [];
+      querySnapshot.forEach((doc) => {
+        invitations.push({ id: doc.id, ...doc.data() });
+      });
+
+      setPendingInvitations(invitations);
+    } catch (error) {
+      console.error('Error loading invitations:', error);
     }
   };
 
@@ -226,6 +300,74 @@ export default function WorkspaceOverviewScreen({ workspaces, setWorkspaces, onS
     );
   };
 
+  const handleAcceptInvitation = async (invitation) => {
+    try {
+      // Get the workspace
+      const workspaceRef = doc(db, 'workspaces', invitation.workspaceId);
+      const workspaceDoc = await getDoc(workspaceRef);
+
+      if (!workspaceDoc.exists()) {
+        Alert.alert(t('common.error'), t('invitations.errors.workspaceNotFound'));
+        return;
+      }
+
+      const workspace = workspaceDoc.data();
+
+      // Create employee object
+      const newEmployee = {
+        userId: invitation.invitedUserId,
+        username: invitation.invitedUsername,
+        name: invitation.invitedName,
+        email: invitation.invitedEmail,
+        photoURL: invitation.invitedPhotoURL,
+        roleId: invitation.roleId,
+        color: getEmployeeColor(invitation.invitedUserId),
+        addedAt: new Date().toISOString()
+      };
+
+      // Add employee to workspace
+      await updateDoc(workspaceRef, {
+        employees: arrayUnion(newEmployee)
+      });
+
+      // Update invitation status
+      await updateDoc(doc(db, 'workspaceInvitations', invitation.id), {
+        status: 'accepted',
+        acceptedAt: new Date().toISOString()
+      });
+
+      // Reload workspaces and invitations
+      await loadWorkspaces();
+      await loadPendingInvitations();
+    } catch (error) {
+      console.error('Error accepting invitation:', error);
+      Alert.alert(t('common.error'), t('invitations.errors.acceptFailed'));
+    }
+  };
+
+  const handleDeclineInvitation = (invitation) => {
+    Alert.alert(
+      t('invitations.decline.confirmTitle'),
+      t('invitations.decline.confirmMessage', { workspace: invitation.workspaceName }),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('invitations.decline.confirmButton'),
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteDoc(doc(db, 'workspaceInvitations', invitation.id));
+              await loadPendingInvitations();
+            } catch (error) {
+              console.error('Error declining invitation:', error);
+              Alert.alert(t('common.error'), t('invitations.errors.declineFailed'));
+            }
+          }
+        }
+      ]
+    );
+  };
+
   const handleLeaveWorkspace = () => {
     Alert.alert(
       t('workspaceOverview.leaveConfirm.title'),
@@ -306,6 +448,13 @@ export default function WorkspaceOverviewScreen({ workspaces, setWorkspaces, onS
           <Text style={styles(theme).statLabel}>{t('workspaceOverview.member')}</Text>
         </View>
       </View>
+
+      {/* Pending Invitations */}
+      <PendingInvitations
+        invitations={pendingInvitations}
+        onAccept={handleAcceptInvitation}
+        onDecline={handleDeclineInvitation}
+      />
 
       {/* Today's Shifts Box */}
       <View style={[

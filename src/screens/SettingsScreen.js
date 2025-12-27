@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, StyleSheet, Image, Linking } from 'react-native';
-import { updateProfile } from 'firebase/auth';
-import { doc, updateDoc, getDocs, query, where, collection, getDoc } from 'firebase/firestore';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, StyleSheet, Image, Linking, Modal } from 'react-native';
+import { updateProfile, deleteUser, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
+import { doc, updateDoc, getDocs, query, collection, getDoc, deleteDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
@@ -17,6 +17,8 @@ export default function SettingsScreen({ onBack, onLogout, onNavigateToSubscript
   const [name, setName] = useState('');
   const [profilePicture, setProfilePicture] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
 
   // Load user data from Firestore on mount
   useEffect(() => {
@@ -178,6 +180,68 @@ export default function SettingsScreen({ onBack, onLogout, onNavigateToSubscript
         }
       ]
     );
+  };
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      t('settings.deleteAccount.title'),
+      t('settings.deleteAccount.warning'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('settings.deleteAccount.confirm'),
+          style: 'destructive',
+          onPress: () => {
+            setDeletePassword('');
+            setShowDeleteModal(true);
+          }
+        }
+      ]
+    );
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletePassword) {
+      Alert.alert(t('common.error'), t('settings.deleteAccount.passwordRequired'));
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const user = auth.currentUser;
+      const credential = EmailAuthProvider.credential(user.email, deletePassword);
+
+      // Re-authenticate user
+      await reauthenticateWithCredential(user, credential);
+
+      // Try to delete user document (don't fail if it doesn't work)
+      try {
+        await deleteDoc(doc(db, 'users', user.uid));
+      } catch (dbError) {
+        console.log('Could not delete user document:', dbError);
+      }
+
+      // Delete Firebase Auth account
+      await deleteUser(user);
+
+      // Close modal and navigate to login
+      setShowDeleteModal(false);
+      setDeletePassword('');
+      setLoading(false);
+
+      // Use the logout callback to navigate to login screen
+      if (onLogout) {
+        onLogout();
+      }
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      setLoading(false);
+      if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+        Alert.alert(t('common.error'), t('settings.deleteAccount.wrongPassword'));
+      } else {
+        Alert.alert(t('common.error'), t('settings.deleteAccount.failed'));
+      }
+    }
   };
 
   return (
@@ -406,6 +470,22 @@ export default function SettingsScreen({ onBack, onLogout, onNavigateToSubscript
             </View>
             <Ionicons name="chevron-forward" size={20} color={theme.textSecondary} />
           </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles(theme).deleteAccountButton}
+            onPress={handleDeleteAccount}
+          >
+            <View style={styles(theme).settingLeft}>
+              <View style={[styles(theme).settingIconContainer, styles(theme).deleteIconContainer]}>
+                <Ionicons name="trash-outline" size={20} color={theme.error} />
+              </View>
+              <View style={styles(theme).settingTextContainer}>
+                <Text style={[styles(theme).settingTitle, styles(theme).logoutText]}>{t('settings.deleteAccount.title')}</Text>
+                <Text style={styles(theme).settingDescription}>{t('settings.deleteAccount.description')}</Text>
+              </View>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={theme.textSecondary} />
+          </TouchableOpacity>
         </View>
 
         {/* App Info */}
@@ -413,6 +493,60 @@ export default function SettingsScreen({ onBack, onLogout, onNavigateToSubscript
           <Text style={styles(theme).appInfoText}>{t('settings.appInfo')}</Text>
         </View>
       </ScrollView>
+
+      {/* Delete Account Modal */}
+      <Modal
+        visible={showDeleteModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowDeleteModal(false)}
+      >
+        <View style={styles(theme).deleteModalOverlay}>
+          <View style={styles(theme).deleteModalContent}>
+            <View style={styles(theme).deleteModalHeader}>
+              <View style={styles(theme).deleteModalIconContainer}>
+                <Ionicons name="warning" size={32} color={theme.error} />
+              </View>
+              <Text style={styles(theme).deleteModalTitle}>{t('settings.deleteAccount.confirmTitle')}</Text>
+              <Text style={styles(theme).deleteModalSubtitle}>{t('settings.deleteAccount.confirmMessage')}</Text>
+            </View>
+
+            <TextInput
+              style={styles(theme).deletePasswordInput}
+              placeholder={t('auth.password')}
+              placeholderTextColor={theme.textSecondary}
+              value={deletePassword}
+              onChangeText={setDeletePassword}
+              secureTextEntry
+              autoCapitalize="none"
+              editable={!loading}
+            />
+
+            <View style={styles(theme).deleteModalButtons}>
+              <TouchableOpacity
+                style={styles(theme).deleteModalCancelButton}
+                onPress={() => {
+                  setShowDeleteModal(false);
+                  setDeletePassword('');
+                }}
+                disabled={loading}
+              >
+                <Text style={styles(theme).deleteModalCancelText}>{t('common.cancel')}</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles(theme).deleteModalConfirmButton, loading && styles(theme).buttonDisabled]}
+                onPress={handleConfirmDelete}
+                disabled={loading}
+              >
+                <Text style={styles(theme).deleteModalConfirmText}>
+                  {loading ? t('common.loading') : t('common.delete')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -596,6 +730,20 @@ const styles = (theme) => StyleSheet.create({
   logoutIconContainer: {
     backgroundColor: theme.primaryDark === '#1a2e1a' ? '#2e1a1a' : '#ffe0e0',
   },
+  deleteIconContainer: {
+    backgroundColor: theme.primaryDark === '#1a2e1a' ? '#2e1a1a' : '#ffe0e0',
+  },
+  deleteAccountButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: theme.surface,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: theme.error,
+  },
   settingTextContainer: {
     flex: 1,
   },
@@ -619,5 +767,87 @@ const styles = (theme) => StyleSheet.create({
   appInfoText: {
     fontSize: 12,
     color: theme.textSecondary,
+  },
+  deleteModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  deleteModalContent: {
+    backgroundColor: theme.surface,
+    borderRadius: 20,
+    padding: 24,
+    width: '100%',
+    maxWidth: 400,
+    borderWidth: 2,
+    borderColor: theme.error,
+  },
+  deleteModalHeader: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  deleteModalIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: theme.primaryDark === '#1a2e1a' ? '#2e1a1a' : '#ffe0e0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  deleteModalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: theme.text,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  deleteModalSubtitle: {
+    fontSize: 14,
+    color: theme.textSecondary,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  deletePasswordInput: {
+    backgroundColor: theme.background,
+    borderRadius: 12,
+    padding: 16,
+    color: theme.text,
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: theme.error,
+    marginBottom: 20,
+  },
+  deleteModalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  deleteModalCancelButton: {
+    flex: 1,
+    padding: 16,
+    alignItems: 'center',
+    borderRadius: 12,
+    backgroundColor: theme.surfaceVariant,
+    borderWidth: 1,
+    borderColor: theme.border,
+  },
+  deleteModalCancelText: {
+    color: theme.text,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  deleteModalConfirmButton: {
+    flex: 1,
+    padding: 16,
+    alignItems: 'center',
+    borderRadius: 12,
+    backgroundColor: theme.error,
+  },
+  deleteModalConfirmText: {
+    color: theme.text,
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });

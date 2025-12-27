@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Modal, TextInput, Alert, StyleSheet, Switch, ActivityIndicator } from 'react-native';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, onSnapshot } from 'firebase/firestore';
 import { db, auth } from '../config/firebase';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
@@ -25,12 +25,31 @@ export default function RolesView({ workspace, onWorkspaceUpdate }) {
   const canManageRoles = isOwner || currentUserRole?.permissions.includes('manage_roles');
 
   const availablePermissions = [
-    { id: 'manage_employees', name: t('roles.permissions.manage_employees'), description: t('roles.permissionDescriptions.manage_employees'), icon: 'people' },
-    { id: 'manage_roles', name: t('roles.permissions.manage_roles'), description: t('roles.permissionDescriptions.manage_roles'), icon: 'shield-checkmark' },
-    { id: 'manage_shifts', name: t('roles.permissions.manage_shifts'), description: t('roles.permissionDescriptions.manage_shifts'), icon: 'time' },
-    { id: 'manage_schedule', name: t('roles.permissions.manage_schedule'), description: t('roles.permissionDescriptions.manage_schedule'), icon: 'calendar' },
-    { id: 'analytics', name: t('roles.permissions.analytics'), description: t('roles.permissionDescriptions.analytics'), icon: 'stats-chart' }
+    { id: 'manage_employees', name: t('roles.permissions.manage_employees'), description: t('roles.permissions.manage_employees_desc'), icon: 'people' },
+    { id: 'manage_roles', name: t('roles.permissions.manage_roles'), description: t('roles.permissions.manage_roles_desc'), icon: 'shield-checkmark' },
+    { id: 'manage_shifts', name: t('roles.permissions.manage_shifts'), description: t('roles.permissions.manage_shifts_desc'), icon: 'time' },
+    { id: 'manage_schedule', name: t('roles.permissions.manage_schedule'), description: t('roles.permissions.manage_schedule_desc'), icon: 'calendar' },
+    { id: 'analytics', name: t('roles.permissions.analytics'), description: t('roles.permissions.analytics_desc'), icon: 'stats-chart' }
   ];
+
+  // Real-time workspace listener
+  useEffect(() => {
+    if (!workspace.id) return;
+
+    const workspaceRef = doc(db, 'workspaces', workspace.id);
+    const unsubscribe = onSnapshot(workspaceRef, (docSnapshot) => {
+      if (docSnapshot.exists()) {
+        const updatedWorkspace = { id: docSnapshot.id, ...docSnapshot.data() };
+        if (onWorkspaceUpdate) {
+          onWorkspaceUpdate(updatedWorkspace);
+        }
+      }
+    }, (error) => {
+      console.error('Error listening to workspace updates:', error);
+    });
+
+    return () => unsubscribe();
+  }, [workspace.id]);
 
   // Ensure Owner role always has all permissions
   useEffect(() => {
@@ -257,12 +276,9 @@ export default function RolesView({ workspace, onWorkspaceUpdate }) {
         <View style={styles(theme).headerContent}>
           <View style={styles(theme).headerTextContainer}>
             <Text style={styles(theme).headerTitle}>{t('roles.title')}</Text>
-            <Text style={styles(theme).headerSubtitle}>
-              {t('roles.count', { count: workspace.roles.length })}
-            </Text>
           </View>
           <View style={styles(theme).headerIcon}>
-            <Ionicons name="shield-checkmark" size={32} color={theme.primary} />
+            <Ionicons name="shield-checkmark" size={24} color={theme.primary} />
           </View>
         </View>
       </View>
@@ -413,7 +429,7 @@ export default function RolesView({ workspace, onWorkspaceUpdate }) {
                 />
               </View>
 
-              <Text style={styles(theme).permissionsTitle}>{t('roles.permissionsTitle')}</Text>
+              <Text style={styles(theme).permissionsTitle}>{t('roles.editModal.permissionsTitle')}</Text>
               {availablePermissions.map(perm => (
                 <View key={perm.id} style={styles(theme).permissionRow}>
                   <View style={styles(theme).permissionIconContainer}>
@@ -497,7 +513,7 @@ export default function RolesView({ workspace, onWorkspaceUpdate }) {
               </View>
 
               <Text style={styles(theme).permissionsTitle}>
-                {selectedRole?.id === '1' ? t('roles.permissionsTitleOwner') : t('roles.permissionsTitle')}
+                {selectedRole?.id === '1' ? t('roles.editModal.permissionsTitle') : t('roles.editModal.permissionsTitle')}
               </Text>
               {availablePermissions.map(perm => (
                 <View key={perm.id} style={styles(theme).permissionRow}>
@@ -571,7 +587,7 @@ const styles = (theme) => StyleSheet.create({
     backgroundColor: theme.surface,
     borderBottomWidth: 1,
     borderBottomColor: theme.border,
-    padding: 20,
+    padding: 16,
   },
   headerContent: {
     flexDirection: 'row',
@@ -583,18 +599,18 @@ const styles = (theme) => StyleSheet.create({
   },
   headerTitle: {
     color: theme.text,
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   headerSubtitle: {
     color: theme.textSecondary,
-    fontSize: 14,
+    fontSize: 13,
   },
   headerIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: theme.primaryDark,
     justifyContent: 'center',
     alignItems: 'center',

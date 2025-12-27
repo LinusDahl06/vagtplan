@@ -170,7 +170,14 @@
       "calendar": "Kalender",
       "employees": "Medarbejdere",
       "analytics": "Analyser",
-      "settings": "Indstillinger"
+      "settings": "Indstillinger",
+      "roles": "Roller",
+      "shifts": "Vagter",
+      "schedule": "Tidsplan"
+    },
+    "removed": {
+      "title": "Fjernet fra arbejdsområde",
+      "message": "Du er blevet fjernet fra dette arbejdsområde af en administrator."
     }
   },
   "calendar": {
@@ -289,7 +296,9 @@
       "alreadyAdded": "Denne bruger er allerede medarbejder",
       "addFailed": "Kunne ikke tilføje medarbejder",
       "removeFailed": "Kunne ikke fjerne medarbejder",
-      "updateRoleFailed": "Kunne ikke opdatere medarbejderrolle"
+      "updateRoleFailed": "Kunne ikke opdatere medarbejderrolle",
+      "invitationPending": "En invitation er allerede sendt til denne bruger",
+      "inviteFailed": "Kunne ikke sende invitation"
     },
     "removeConfirm": {
       "title": "Fjern medarbejder",
@@ -299,6 +308,33 @@
       "added": "Medarbejder tilføjet!",
       "removed": "Medarbejder fjernet",
       "roleUpdated": "Medarbejderrolle opdateret"
+    },
+    "invitationSent": {
+      "title": "Invitation sendt",
+      "message": "{{name}} vil modtage en invitation til at deltage i dette arbejdsområde"
+    }
+  },
+  "invitations": {
+    "workspaceInvite": "Arbejdsområdeinvitation",
+    "invitedYouTo": "inviterede dig til",
+    "selectEmployee": "Vælg medarbejder",
+    "accepted": {
+      "title": "Invitation accepteret",
+      "message": "Du er nu tilmeldt {{workspace}}!"
+    },
+    "declined": {
+      "title": "Invitation afvist",
+      "message": "Du afslog invitationen til {{workspace}}"
+    },
+    "decline": {
+      "confirmTitle": "Afvis invitation",
+      "confirmMessage": "Er du sikker på, at du vil afvise invitationen til {{workspace}}?",
+      "confirmButton": "Afvis"
+    },
+    "errors": {
+      "workspaceNotFound": "Arbejdsområdet eksisterer ikke længere",
+      "acceptFailed": "Kunne ikke acceptere invitation",
+      "declineFailed": "Kunne ikke afvise invitation"
     }
   },
   "roles": {
@@ -421,6 +457,8 @@
   },
   "scheduleManagement": {
     "title": "Vagtplanstyring",
+    "subtitle": "Administrer og ryd vagtplaner",
+    "infoCard": "Brug disse værktøjer til at rydde vagtplaner for bestemte måneder eller alle vagtplaner. Disse handlinger kan ikke fortrydes.",
     "clearMonth": {
       "title": "Ryd månedens vagtplan",
       "description": "Fjern alle vagter for en bestemt måned. Denne handling kan ikke fortrydes.",
@@ -501,6 +539,18 @@
     "logoutConfirm": {
       "title": "Log ud",
       "message": "Er du sikker på, at du vil logge ud?"
+    },
+    "deleteAccount": {
+      "title": "Slet konto",
+      "description": "Slet din konto permanent",
+      "warning": "Dette vil permanent slette din konto, fjerne dig fra alle arbejdsområder og slette alle arbejdsområder du ejer. Denne handling kan ikke fortrydes.",
+      "confirm": "Slet min konto",
+      "confirmTitle": "Indtast adgangskode",
+      "confirmMessage": "Indtast din adgangskode for at bekræfte sletning af konto",
+      "passwordRequired": "Adgangskode er påkrævet",
+      "wrongPassword": "Forkert adgangskode. Prøv igen.",
+      "failed": "Kunne ikke slette konto. Prøv igen.",
+      "success": "Din konto er blevet slettet"
     }
   },
   "defaultRoles": {
@@ -561,5 +611,50 @@
       "success": "Abonnement opdateret (Demo-tilstand)",
       "button": "Demo-ændring"
     }
+  },
+  "shiftSwap": {
+    "title": "Vagtbytte",
+    "incoming": "Indgående anmodninger",
+    "sent": "Sendte anmodninger",
+    "noIncoming": "Ingen indgående vagtbytte-anmodninger",
+    "noSent": "Ingen sendte vagtbytte-anmodninger",
+    "pending": "Afventer",
+    "openSwap": "Åben vagtbytte",
+    "myShift": "Min vagt",
+    "theirShift": "Deres vagt",
+    "yourShift": "Din vagt",
+    "requestedTo": "Anmodning til",
+    "accept": "Accepter",
+    "decline": "Afvis",
+    "cancelRequest": "Annuller anmodning",
+    "acceptConfirm": {
+      "title": "Accepter vagtbytte",
+      "message": "Er du sikker på, at du vil acceptere denne vagtbytte?"
+    },
+    "declineConfirm": {
+      "title": "Afvis vagtbytte",
+      "message": "Er du sikker på, at du vil afvise denne vagtbytte?"
+    },
+    "cancelConfirm": {
+      "title": "Annuller anmodning",
+      "message": "Er du sikker på, at du vil annullere denne vagtbytte-anmodning?"
+    },
+    "acceptSuccess": "Vagtbytte accepteret!",
+    "declineSuccess": "Vagtbytte afvist",
+    "acceptError": "Kunne ikke acceptere vagtbytte",
+    "declineError": "Kunne ikke afvise vagtbytte",
+    "cancelError": "Kunne ikke annullere anmodning",
+    "createRequest": "Opret vagtbytte-anmodning",
+    "swapType": "Byttype",
+    "specificEmployee": "Specifik medarbejder",
+    "selectEmployee": "Vælg medarbejder",
+    "selectEmployeePlaceholder": "Vælg en medarbejder...",
+    "messageOptional": "Besked (valgfri)",
+    "messagePlaceholder": "Tilføj en besked til din vagtbytte-anmodning...",
+    "sendRequest": "Send anmodning",
+    "requestCreated": "Vagtbytte-anmodning oprettet!",
+    "errorCreatingRequest": "Kunne ikke oprette vagtbytte-anmodning",
+    "canOnlySwapOwnShifts": "Du kan kun bytte dine egne vagter",
+    "error": "Fejl"
   }
 }
